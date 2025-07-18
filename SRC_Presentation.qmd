@@ -1,0 +1,351 @@
+---
+title: "Simulating Financial Markets to Analyze Personal Retirement Plans"
+author: "Evan Miller, Brian Hartman, Jean-Francois Begin (Simon Fraser University)"
+format: 
+  revealjs:
+    theme: moon
+  #   format:  
+  # beamer-pdf:
+  #   theme: metropolis
+editor: visual
+---
+
+## Planning for Retirement {background-color="#FFFAEE"}
+
+::: {.fragment .semi-fade-out}
+**Pre-retirement:**
+
+-   How much money do I need to retire?
+
+-   How long will it take to save that much?
+
+-   When should I retire?
+:::
+
+**Post-retirement:**
+
+-   How much can I spend in retirement?
+
+-   How long will my money last?
+
+## Longevity Risk {background-color="#FFFAEE"}
+
+-   The probability of running out of assets in retirement
+
+Financial Unknowns:
+
+::: {.fragment .fade-up}
+-   Cost of Living (inflation)
+-   Equity Returns
+-   Medical Costs
+-   End of Life Costs
+:::
+
+## How is this risk treated? {background-color="#FFFAEE"}
+
+:::::: {.fragment .fade-out}
+#### Deterministic approach:
+
+::::: columns
+::: {.column width="40%"}
+Inflation: 2%
+
+Stock Returns: 5%, 8%
+:::
+
+::: {.column width="60%"}
+Short Term Interest Rate: 3%
+
+Withdrawal Amount: \$XXX.XX
+:::
+
+```{r, fig.width=10, fig.height=4}
+library(tidyverse)
+library(scales)
+# deterministic approach
+inflation <- 0.02
+stock_returns <- 0.08
+stock_returns2 <- .05
+short_term_rate <- 0.03
+withdrawal_amount <- 1000000 * .04
+
+
+# retirement savings
+savings <- 1000000
+
+# retirement period
+retirement_years <- 30
+
+savings_by_year <- numeric(retirement_years)
+savings_by_year[1] <- savings
+savings_by_year2 <- numeric(retirement_years)
+savings_by_year2[1] <- savings
+
+# simulate retirement
+for (i in 2:retirement_years) {
+  savings_by_year[i] <- savings_by_year[i-1] - withdrawal_amount*(1+inflation) + (stock_returns * .2*savings_by_year[i-1])
+  savings_by_year2[i] <- savings_by_year2[i-1] - withdrawal_amount*(1+inflation) + (stock_returns2 * .2*savings_by_year2[i-1])
+}
+
+df <- data.frame(year = 1:retirement_years,
+                 savings1 = savings_by_year,
+                 savings2 = savings_by_year2)
+
+ggplot(df) +
+  geom_line(aes(x = year, y = savings1, color = '8%')) +
+  geom_line(aes(x = year, y = savings2, color = '5%')) +
+  labs(x = 'Years into Retirement', y = 'Savings ($)', color = 'Stock Returns',
+       title = 'Retirement Portfolio with Different Stock Returns') +
+  scale_color_manual(values = c('8%' = 'black', '5%' = 'red')) +
+  scale_y_continuous(labels = label_currency()) +  # Format y-axis as currency
+  theme_minimal()
+
+
+```
+:::::
+::::::
+
+## How is this risk treated? {background-color="#FFFAEE"}
+
+#### Simulation from the past:
+
+-   Apply a specific "retirement plan" to a year from the past
+    1.  Pick a "plan" (i.e. 4% Withdrawal Rate, 50% equity porfolio)
+    2.  Apply that plan to a year from the past
+    3.  Simulate cash-flows using past data
+    4.  Iterate over "all" years
+
+## Our Approach: {background-color="#FFFAEE"}
+
+::: fragment
+1.  Build a model for each component of the economy that affects retirement plans
+:::
+
+::: fragment
+2.  Combine individual models to represent "an economy" (Economic Scenario Generator)
+:::
+
+::: fragment
+3.  Simulate economic scenarios
+:::
+
+::: fragment
+4.  Apply retirement plans to these scenarios and analyze outcomes
+:::
+
+## Economic Scenario Generator (ESG) {background-color="#FFFAEE"}
+
+::: notes
+Model of an economic environment used to simulate financial markets and economic variables Used in pricing financial products such as insurance and financial derivatives
+:::
+
+![](ESG_diagram.png){fig-align="center"}
+
+## Step 1: Inflation {background-color="#FFFAEE"}
+
+$$CPI \rightarrow \log(CPI_n) - \log(CPI_{n-1}) = \log(\frac{CPI_n}{CPI_{n-1}})$$
+
+```{r, fig.align="center"}
+library(patchwork)
+cpi_raw <- read_csv("data/cpi.csv")
+
+cpi_df <- read_csv("data/cpi.csv") |> 
+  filter(date >= "1990-01-01") |> 
+  mutate(lagged_cpi = lag(cpi, n = 1)) |> 
+  mutate(log_dif_cpi = log(cpi) - log(lagged_cpi)) |> 
+  filter(!is.na(log_dif_cpi))
+
+p1 <- ggplot(cpi_df) +
+  geom_line(aes(x = date, y = cpi)) +
+  labs(x = 'Year', y = 'CPI', title = 'Consumer Price Index')
+
+p2 <- ggplot(cpi_df) +
+  geom_line(aes(x = date, y = log_dif_cpi)) +
+  labs(x = 'Year', y = 'Log Difference in CPI', title = 'Log Difference in CPI')
+
+p1 + p2
+
+```
+
+## Step 1: Inflation {background-color="#FFFAEE"}
+
+$$\log(\frac{CPI_n}{CPI_{n-1}}) \sim ARIMA(1,0,1)$$
+
+```{r, fig.align="center", fig.width = 12}
+
+library(forecast)
+
+log_dif_cpi_ts <- ts(cpi_df$log_dif_cpi, start = c(min(year(cpi_df$date)), month(min(cpi_df$date))), frequency = 12)
+
+
+cpi_arima_model <- Arima(log_dif_cpi_ts, order = c(1, 0, 1))
+
+n_sims <- 1000
+sim_length <- 12*30
+ar101_sims <- matrix(NA, nrow = n_sims, ncol = sim_length)
+
+for(i in 1:n_sims){
+  ar101_sims[i,] <- simulate(cpi_arima_model, nsim = sim_length)
+}
+
+# get average simulation
+ar101_avg <- colMeans(ar101_sims)
+# get 95% intervals
+ar101_ci <- apply(ar101_sims, 2, quantile, probs = c(.025, .975))
+
+df <- data.frame(
+  index = 1:length(ar101_avg),  # Assuming ar101_avg has a time component
+  avg = ar101_avg,
+  upper = ar101_ci[2,],
+  lower = ar101_ci[1,]
+)
+
+# Plot
+p2 <- ggplot(df, aes(x = index)) +
+  geom_line(aes(y = avg, color = "Average")) +  # Main line with legend label
+  geom_line(aes(y = upper, color = "Confidence Band"), linetype = "dashed") +  # Upper CI line, no legend for linetype
+  geom_line(aes(y = lower, color = "Confidence Band"), linetype = "dashed") +  # Lower CI line, no legend for linetype
+  scale_y_continuous(limits = c(-0.009, 0.015)) +  # Set y-axis limits
+  labs(x = "Index", y = "Log Difference in CPI", title = "Simulation with 95% Confidence Intervals") +
+  scale_color_manual(values = c("Average" = "black", "Confidence Band" = "red")) +  # Customize colors
+  theme_minimal() +
+  theme(legend.title = element_blank()) +
+  theme(legend.position = "top")  # Move the legend to the top
+
+arima_sim <- simulate(cpi_arima_model, nsim = 20*12)
+
+p1 <- ggplot() + 
+  geom_line(aes(x = time(arima_sim), y = arima_sim, color = "Simulated")) + 
+  geom_line(aes(x = time(log_dif_cpi_ts), y = log_dif_cpi_ts, color = "Actual")) + 
+  ggtitle("Single Simulation") + 
+  xlab("Year") + 
+  ylab("Log Difference in CPI") + 
+  scale_color_manual(values = c("Simulated" = "red", "Actual" = "black")) + 
+  theme_minimal() +
+  labs(color = "") +  # Label the legend
+  theme(legend.position = "top")  # Move the legend to the top
+
+p1 + p2
+```
+
+## Step 2: Wage Inflation (ECI) {background-color="#FFFAEE"}
+
+$$\log(\frac{ECI_n}{ECI_{n-1}}) \sim ARIMA(1,1,1) +\log(\frac{CPI_{n-1}}{CPI_{n-2}})$$
+
+```{r, fig.align="center", fig.width = 12}
+
+quarterly_cpi <- cpi_df |> 
+  filter(month(date) %in% c(3, 6, 9, 12)) |>
+  mutate(lagged_cpi = lag(cpi, n = 1)) |> 
+  mutate(log_dif_cpi = log(cpi) - log(lagged_cpi),
+         lagged_cpi = lag(log_dif_cpi, n = 1)) |> 
+  filter(!is.na(log_dif_cpi) & !is.na(lagged_cpi)) # remove first observation without lag
+
+eci_df <- read_csv("data/eci.csv") |> 
+  filter(date >= min(quarterly_cpi$date)-months(3)) |> # only need data that cpi has
+  mutate(lagged_eci = lag(eci, n = 1)) |> 
+  mutate(log_dif_eci = log(eci) - log(lagged_eci)) |> 
+  filter(!is.na(log_dif_eci)) # remove first observation without lag
+
+
+# Ensure the data is ordered and converted into time series
+log_dif_eci_ts <- ts(eci_df$log_dif_eci, start = c(min(year(eci_df$date)), quarter(min(eci_df$date))), frequency = 4)
+log_dif_cpi_ts <- ts(quarterly_cpi$log_dif_cpi, start = c(min(year(eci_df$date))), frequency = 4)
+lagged_cpi_ts <- ts(quarterly_cpi$lagged_cpi, start = c(min(year(eci_df$date))), frequency = 4)
+xreg_matrix <- cbind(log_dif_cpi_ts, lagged_cpi_ts)
+xreg_matrix <- cbind(quarterly_cpi$log_dif_cpi,quarterly_cpi$lagged_cpi)
+
+arima_model_wlagcpi <- Arima(log_dif_eci_ts, order = c(1, 1, 1), xreg = xreg_matrix[,2])
+
+# Get draws of the model 
+
+n_sims <- 1000
+sim_length <- 4*30
+full_model_sims <- matrix(NA, nrow = n_sims, ncol = sim_length)
+
+for(i in 1:n_sims){
+  log_dif_cpi_sim <- simulate(cpi_arima_model, nsim = sim_length*3)
+  
+  # make simulations quarterly
+  quarterly_cpi_sim_df <- data.frame(
+    date = zoo::as.Date(time(log_dif_cpi_sim)),
+    value = log_dif_cpi_sim) |> 
+    mutate(year = year(date),
+           quarter = quarter(date)) |> 
+    group_by(year, quarter) |> 
+    summarize(date = max(date),
+              log_dif_cpi = sum(value))
+  
+  lagged_cpi_sim <- c(tail(quarterly_cpi$log_dif_cpi, n = 1), head(quarterly_cpi_sim_df$log_dif_cpi, n = -1))
+  full_model_sims[i,] <- simulate(arima_model_wlagcpi, nsim = sim_length, xreg = lagged_cpi_sim)
+}
+
+# remove first column of each simulation
+ar101_sims <- ar101_sims[,-1]
+full_model_sims <- full_model_sims[,-1]
+
+# get average simulation
+ar101_avg <- colMeans(ar101_sims)
+full_model_avg <- colMeans(full_model_sims)
+# get 95% intervals
+ar101_ci <- apply(ar101_sims, 2, quantile, probs = c(.025, .975))
+full_model_ci <- apply(full_model_sims, 2, quantile, probs = c(.025, .975))
+
+# Create a data frame for plotting
+df <- data.frame(
+  year = 1:length(full_model_avg),  # Assuming the x-axis is sequential time
+  avg = full_model_avg,
+  upper = full_model_ci[2,],
+  lower = full_model_ci[1,]
+)
+
+# Plot using ggplot
+p4 <- ggplot(df, aes(x = year)) +
+  geom_line(aes(y = avg, color = "Average"), size = 1) +  # Main line
+  geom_line(aes(y = upper, color = "Confidence Band"), linetype = "dashed") +  # Upper CI
+  geom_line(aes(y = lower, color = "Confidence Band"), linetype = "dashed") +  # Lower CI
+  scale_color_manual(values = c("Average" = "black", "Confidence Band" = "red")) +  # Define colors
+  scale_y_continuous(limits = c(-0.008, 0.03)) +  # Set y-axis limits
+  labs(x = "Index", y = "ECI", title = "Full Model Simulation with 95% Confidence Intervals", color = "Legend") +
+  theme_minimal() +
+  theme(legend.position = "top")  # Move the legend to the top
+
+arima_sim <- simulate(cpi_arima_model, nsim = 20*12)
+
+# make simulations quarterly
+quarterly_cpi_sim_df <- data.frame(date = zoo::as.Date(time(arima_sim)), value = arima_sim) |>
+  mutate(year = year(date), quarter = quarter(date)) |>
+  group_by(year, quarter) |>
+  summarize(date = max(date), log_dif_cpi = sum(value))
+  
+lagged_cpi_sim <- c(tail(quarterly_cpi$log_dif_cpi, n = 1), head(quarterly_cpi_sim_df$log_dif_cpi, n = -1))
+single_sim <- simulate(arima_model_wlagcpi, nsim = sim_length, xreg = lagged_cpi_sim)
+
+p3 <- ggplot() + 
+  geom_line(aes(x = time(single_sim), y = single_sim, color = "Simulated")) + 
+  geom_line(aes(x = time(log_dif_eci_ts), y = log_dif_cpi_ts, color = "Actual")) + 
+  ggtitle("Single Simulation") + 
+  xlab("Year") + 
+  ylab("Log Difference in ECI") + 
+  scale_color_manual(values = c("Simulated" = "red", "Actual" = "black")) + 
+  theme_minimal() +
+  labs(color = "") +  # Label the legend
+  theme(legend.position = "top") 
+
+p3 + p4
+
+
+```
+
+## Looking Ahead {background-color="#FFFAEE"}
+
+![](ESG_diagram.png){fig-align="center"}
+
+## Looking Ahead {background-color="#FFFAEE"}
+
+-   Continue building the ESG
+-   Address questions:
+    -   How much should someone withdraw each year into retirement (safe-withdrawal rate)?
+    -   How much should someone annuitize?
+    -   How risky would "x" spending plan be?
+-   Shiny App

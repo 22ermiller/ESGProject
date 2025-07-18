@@ -1,0 +1,217 @@
+October 30 - November 12
+
+Meeting Notes:
+1. get monthly data for each measure or keep everything the same frequency
+2. look at vector autogressives (multivariate AR model)
+3. look at correlation between residuals from each ARIMA model
+
+Notes:
+ECI is only quarterly. How do we address this?
+Residuals from each model don't seem to be correlated.
+Medical Inflation forecast seems to have a downward trend, this doesn't feel right...
+
+November 13 - November 19
+
+Meeting Notes:
+1. Get Draws of each time series
+2. Try ARIMA(1,0,1) for each model and compare AIC
+3. Model Monthly CPI and use quarterly CPI to model ECI
+4. Get draws from CPI and use those draws to get draws from ECI model
+
+Notes:
+Why is a differencing term of 1 favored when modelling log difference of CPI?
+What is the intuition behind ECI and Med Inflation being related to CPI? 
+  Lag of CPI has higher correlation than CPI
+  The models AIC values indicate adding CPI doesn't really help
+  
+November 20 - November 26
+
+Meeting Notes:
+1. Fit models just after the rounding stops (2010ish)
+2. Simulate draws from each model and compare Intervals and Mean
+3. Recalculate log_dif_cpi for quarterly data and re-check correlation
+4. Include lagged and unlagged cpi as covariates (or linear model on difference between cpi and eci)
+
+Notes:
+CPI:
+Massive outlier for log_dif_cpi in December 2008. CPI drops from 211 to 203 from 09/08 to 12/08
+Fitting to data after 2010 shows AIC values lower for ARIMA(1,0,1)
+Seasonality model (with differencing for CPI) shows growing confidence bands
+When should we start using CPI data?
+
+ECI
+I am only using CPI data back to 2010 for the CPI model, but this only provides 58 observations 
+  for the ECI and Medical Inflation model.
+When using both lagged and unlagged CPI in ARIMA, code throws an error
+Some weirdness going on when I fit with lagged values (because of limited data)
+
+December 4 - December 10
+Meeting Notes:
+1. Run auto-arima using CPI data starting at 2010
+2. Run auto-arima for ECI using lagged CPI as predictor
+3. Explore correlation between residuals of independent models (lags as well)
+
+Notes:
+Decided to stick with AR(1,0,1) for CPI, using data back to 2010 AIC and BIC scores are best
+Auto-arima on ECI using lagged CPI as predictor results in ARIMA(0,0,0)(0,1,1)
+After comparing all models for ECI, ARIMA(1,1,1) with just lag CPI has lowest AIC and BIC
+Explored correlation between residuals of independent models
+Medical Inflation: 
+ - doesn't seem to be any correlation between CPI and Medical inflation
+ - AIC and BIC is lowest for for ARIMA(1,0,1)(0,0,2) but difference between ARIMA(1,0,1) is pretty marginal
+ 
+Meeting Notes:
+1. Decided on AR(1,1,1) w/ lag cpi for wage inflation
+2. Run individual simulations and plot cpi & eci results to evaluate if they are related in the way we expect
+3. Double check CPI is CPI without medical inflation
+4. Explore correlation between wage inflation and medical inflation
+5. Feel good about AR(1,0,1) for medical, but keep in mind exploration of med and wage
+6. Create document documenting process of deciding inflation models
+
+January 8 - January 14
+Notes:
+When running "simulate" does it use the last value in the data that the model is fit on to determine the starting point?
+Documentation for simulate.ets in the forecast package is helpful here
+Correlation between the simulations seems to be too low to me
+The CPI model is returning log difference cpi for a time frame. 
+To create quarterly log_difference_cpi to plug into the eci model I need to back transform the values to cpi and calculate quarterly log_dif_CPI
+Not sure how to do this
+Didn't find much correlation between wage inflation and medical inflation
+
+January 15 - January 21
+Meeting Notes:
+1. Fix ECI simulation to have quarterly log difference CPI as predictor
+2. Read ESG Primer on Interest Rates (short term interest rates)
+4. Clean up inflation code
+
+January 22 - January 28
+Meeting Notes:
+1. Test different date ranges of CPI to fit model on and compare simulated draws (1990)
+2. Get 3-month interest rates and play around with it
+3. Explore relationship between interest rate and cpi
+4. Make sure dates for cpi and interest rates match up, or are close
+
+Notes:
+Changing from 2010 to 1990 doesn't affect CPI draws at all
+ECI draws have much wider bands when using data back to 1990
+Also lagged_cpi has pretty much same correlation as cpi using 1990 data (using lagged vs unlagged doesn't affect draws)
+
+Meeting Notes:
+Correlations between raw inflation values and interest rate values
+explore monthly, quarterly, semi annual, and annual inflation with interest rates
+test different transformations on interest rates
+
+Meeting Notes:
+Look at change in interest vs log difference cpi
+Start exploring AR model on interest rates
+
+Meeting Notes:
+Try auto_arima on interest rates model
+Look into stock returns as a function of interest rates (start with basic AR model on log difference in returns)
+
+Notes:
+Leaning towards ARIMA(2,0,2) with log_dif_cpi as predictor for interest rate model
+
+Meeting Notes:
+Look into how auto.arima vs Arima function fits models
+Look into MPE MAPE
+Look into log transformation of rates, piecewise function
+Dif_rate not homoskedastic, could benefit from heteroskedastic model
+Look into GARCH model to address heteroskedasticity
+Simulate with ARIMA(1,0,1)
+
+Notes:
+Options for fitting ARIMA models: MLE, CSS, CSS-MLE
+Specifying CSS-MLE (default) for Arima and auto.arima give different fitted values
+Problem: Single simulations show interest rates can drop below 0
+Trying to implement JF's transformed rates
+- how to we pick c_r
+- how do we pick the order of GARCH model
+
+Meeting Notes:
+Verify if residuals are hetereoskedastic
+rerun model with transformed series
+
+Notes:
+There doesn't seem to be much correlation between interest rates and inflation (especially when using transformed rates)
+Readdress how we want to include inflation in the interest rate model
+
+Meeting Notes:
+1. Verify that sigma(garch_model) is getting standard deviation
+2. Generate Simulated draws from interest rate model to see if we want to include inflation in model
+3. Compare single simulations (look at if things are working how we expect comparing draws of all models)
+
+Notes:
+Still running into issue of interest rates dropping below 0, interest rates are
+  also getting too high in the upper bounds of the simulated draws.
+
+Meeting Notes:
+1. Data going into GARCH model needs to be ts object
+2. Look into how the model is parameterized (what is mu), why is mu .08 and why is our simulation mean around .05
+3. Back-transform the rates
+4. Start simulation at different time (see if the simulations move to average using different starting values)
+
+Notes:
+mu represents the constant mean of the time series. In the simulations we can see that the mean of the simulations revert back to the 
+mu parameter fit in the model (.08)
+Upper bounds feel way too high
+JF's 2021 paper:
+  what is the difference between observable dynamic variances and stochastic volatility type models
+  pg 785: Explain how Correlation between errors of interest rate and inflation are incorporated into model
+  
+Meeting Notes:
+1. Explore fit of fGarch package
+2. Read asset return modelling in ESG primer
+
+Notes:
+https://cran.r-project.org/web/packages/rugarch/vignettes/Introduction_to_the_rugarch_package.pdf has model specification
+It looks like the starting value of the series almost determines mu in rugarch
+Implemented differencing model with rugarch
+- time series still look very off
+Tried implementing model using fGarch package (online it says fGarch isn't maintained anymore, ruGarch is the new, maintained packaged to use)
+- plugging in fitted parameters doesn't produce valid simulated draws (all NaNs)
+
+Meeting Notes:
+subtract empirical mean from series, fit the model without a mu parameter, then add the mean back in
+create issue and send to package maintainer
+
+Notes:
+Which days of stock market returns should we use (inflation numbers are monthly)
+Regime Switching or GARCH model for stock returns
+
+Notes:
+External Regressors on Variance model?
+Could we regress cpi and interest rate on stock returns and then fit residuals to Regime-Switching GARCH
+
+Meeting Notes:
+subtract off mean of stock returns
+remove risk-free rate of return (short-term interest rate), then subtract mean
+create projections to evaluate which model to choose
+test out raw values of cpi and log_dif
+create mean model -> model residuals with RS GARCH
+
+Notes:
+Rugarch package author responded, said the problem is the series is non-stationary
+Am I adding back in mean and interest rate correctly? (line 293)
+
+Meeting Notes:
+Remove mean from interest rate, then fit model, then add back in to draws
+
+Meeting Notes:
+Go with RS GARCH model  
+Write up: Introduction, Model Description
+
+Read through interest rate/yield curve portion of JF's ESG paper 
+
+Meeting Notes:
+Try adding 3mo rate as regressor in var model
+maybe correlation?
+regress multiple interest rates on level, slope, and curve
+
+Notes:
+20 year securities didn't have data from 1990-95ish
+We are saying that the slope and curve don't have any relationship with the level since we are modeling short rate independent?
+
+
+
+

@@ -1,0 +1,28 @@
+---
+title: "Analyzing Retirement Portfolios with an ESG"
+author: "Evan Miller, Brian Hartman, Jean-Francois Begin"
+format: typst
+editor: visual
+---
+
+## Abstract
+
+Effective retirement and financial planning requires tools to model and simulate future financial markets. We build an Economic Scenario Generator (ESG) to simulate these potential future markets. Components of the ESG include but are not limited to inflation, interest rates, equity returns, and bond returns. This ESG provides the tools needed to analyze longevity risk for specific financial situations, and in turn helps answer questions like “How much should be annuitized?” and “What level of spending is sustainable?”
+
+## Introduction
+
+Financial and retirement plans are constructed based on a model of the future economy. The quality of a specific plan can be evaluated by how well it performs given the model of the future economy. It follows then that the quality of these financial plan evaluations depends mostly on the quality of the model being used to represent states of the future economy. A poor model of the future will not yield reliable results regarding financial plan evaluations.
+
+Currently, the financial planning sector widely uses deterministic techniques in their economy modeling. Economic factors such as inflation, equity returns, and interest rates are given a fixed value. A popular approach for determining these values is to take averages from the past. These fixed values are then applied to a financial plan and the success of the plan can be evaluated.
+
+A more thorough technique for future modeling includes directly using economic variable paths from the past. In this technique the model for the future is fully determined by real values from the past economy. The quality of a financial plan is determined by then "applying" the plan to a specific year from the past and evaluating how well it would have performed given the past economy. This process can then be iterated using different starting points, representing different cohorts. This technique tells us exactly how a financial plan would have performed in the past and it may be reasonable to posit that this gives planners a good understanding of how the plan will perform in the future.
+
+However, both of these approaches are deterministic and, by nature, ignore the uncertainty and volatility of financial markets. To more thoroughly understand the performance of a financial plan, we propose a stochastic process through the use of an Economic Scenario Generator (ESG). ESG's simulate future economic scenarios by modeling, jointly, economic variables and financial market values. ESG's are widely used in the financial and actuarial world to price financial products and quantify the risk associated with financial markets. We extend the application of ESG's to the personal financial planning sector and build an ESG specifically for the purpose of evaluating personal financial plans. With an ESG that properly models underlying economic variables and their uncertainty, we can better quantify the risk associated with a given financial plan.
+
+The rest of the paper is organized as follows: Section 2 introduces the overall structure of the proposed ESG, and explains each piece of the ensemble model of the economy.
+
+## Economic Scenario Generator
+
+Many different ESG structures have been proposed in the financial literature. Our approach borrows heavily from existing models for the individual components, and while it does not introduce novel modeling techniques, it is uniquely structured to address the specific financial planning questions we aim to answer. In our ESG, we model inflation, interest rates, equity returns, fixed-income returns, and mortality rates. To account for dependencies between these variables, we adopt a cascade-style structure. This structure is illustrated in Figure 1 below.![Figure 1: Proposed Cascade-Structure ESG](ESG_diagram.png)
+
+$Y \sim N(\mu, \sigma^2)$
