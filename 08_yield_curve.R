@@ -9,6 +9,7 @@ library(tsDyn)
 ir3mo <- read_csv("data/ir3mo.csv") |> rename(three_month = rate)
 ir10yr <- read_csv("data/ir10yr.csv") |> rename(ten_year = rate)
 ir30yr <- read_csv("data/ir30yr.csv") |> rename(thirty_year = rate)
+ir20yr <- read_csv("data/ir20yr.csv") |> rename(twenty_year = rate)
 ir1yr <- read_csv("data/ir1yr.csv") |> rename(one_year = rate)
 ir2yr <- read_csv("data/ir2yr.csv") |> rename(two_year = rate)
 ir3yr <- read_csv("data/ir3yr.csv") |> rename(three_year = rate)
@@ -24,6 +25,7 @@ full_ir <- ir3mo %>%
   left_join(ir3yr, by = "date") |>
   left_join(ir5yr, by = "date") |>
   left_join(ir7yr, by = "date") |>
+  left_join(ir20yr, by = "date") |>
   left_join(ir30yr, by = "date") |> 
   mutate(across(three_month:thirty_year, ~./100)) |> 
   mutate(across(three_month:thirty_year, ~ifelse(. == 0, .0001, .))) |> # can't have 0 for transformation
@@ -64,6 +66,7 @@ var_sim <- VAR.sim(var_model$coefficients,
                    starting = matrix(c(tail(full_ir$slope, 1), tail(full_ir$curve, 1)), nrow = 1),
                    varcov = sample_cov)
 
+
 plot(var_sim[,1], type = "l")
 plot(var_sim[,2], type = "l")
 
@@ -78,7 +81,8 @@ curve_sim <- matrix(NA, nrow = n_sim, ncol = sim_length)
 for (i in 1:n_sim) {
   var_sim <- VAR.sim(var_model$coefficients,
                      n = sim_length,
-                     starting = matrix(c(tail(full_ir$slope, 1), tail(full_ir$curve, 1)), nrow = 1))
+                     starting = matrix(c(tail(full_ir$slope, 1), tail(full_ir$curve, 1)), nrow = 1),
+                     varcov = sample_cov)
   
   slope_sim[i, ] <- var_sim[,1]
   curve_sim[i, ] <- var_sim[,2]
@@ -90,7 +94,7 @@ curve_avg <- colMeans(curve_sim)
 slope_ci <- apply(slope_sim, 2, quantile, probs = c(.025, .975))
 curve_ci <- apply(curve_sim, 2, quantile, probs = c(.025, .975))
 
-plot(slope_avg, type = "l",ylim = c(-.2, .5), main = "Slope Sims")
+plot(slope_avg, type = "l",ylim = c(-.05, .1), main = "Slope Sims")
 lines(slope_ci[2,], col = "red", lty = 2)
 lines(slope_ci[1,], col = "red", lty = 2)
 abline(h = mean(full_ir$slope), col = "blue", lty = 2)
@@ -109,9 +113,10 @@ two_year.lm <- lm(two_year ~ three_month + slope + curve, data = full_ir)
 three_year.lm <- lm(three_year ~ three_month + slope + curve, data = full_ir)
 five_year.lm <- lm(five_year ~ three_month + slope + curve, data = full_ir)
 seven_year.lm <- lm(seven_year ~ three_month + slope + curve, data = full_ir)
+twenty_year.lm <- lm(twenty_year ~ three_month + slope + curve, data = full_ir)
 
 # summary of all models
-models <- list(one_year.lm, two_year.lm, three_year.lm, five_year.lm, seven_year.lm)
+models <- list(one_year.lm, two_year.lm, three_year.lm, five_year.lm, seven_year.lm, twenty_year.lm)
 model_summaries <- lapply(models, summary)
 
 model_summaries
@@ -137,23 +142,30 @@ plot_yield_curve <- function(var_sim, models) {
   three_year_pred <- predict(models[[3]], newdata = new_df)
   five_year_pred <- predict(models[[4]], newdata = new_df)
   seven_year_pred <- predict(models[[5]], newdata = new_df)
+  twenty_year_pred <- predict(models[[6]], newdata = new_df)
   thirty_year_pred <- sample_level + sample_slope
-  ten_year_pred2 <- sample_level + (sample_slope - sample_curve)/2
+  ten_year_pred <- sample_level + (sample_slope - sample_curve)/2
   
   # put in df with 1 column as time, and other column as rate
   yield_curve_df <- data.frame(
-    time = c(3/12, 1, 2, 3, 5, 7, 10, 30),
-    rate = c(sample_level, one_year_pred, two_year_pred, three_year_pred, five_year_pred, seven_year_pred, ten_year_pred2, thirty_year_pred)
+    time = c(3/12, 1, 2, 3, 5, 7, 10, 20, 30),
+    rate = c(sample_level, one_year_pred, two_year_pred, three_year_pred,
+             five_year_pred, seven_year_pred, ten_year_pred, twenty_year_pred, thirty_year_pred)
   )
   
   #plot(yield_curve_df$time, yield_curve_df$rate)
   ggplot(data = yield_curve_df) +
     geom_point(aes(x = time, y = rate)) +
-    geom_smooth(aes(x = time, y = rate), se = FALSE)
+    geom_smooth(aes(x = time, y = rate), se = FALSE) +
+    labs(subtitle = paste0("Slope: ", sample_slope, ". Curve: ", sample_curve))
   
 }
 
 plot_yield_curve(var_sim, models)
+
+# Gut check models
+
+plot(var_sim[,1], var_sim[,2], xlab = "Slope", ylab = "Curvature")
 
 
 # How has the yield curve historically changed? ---------------------------
@@ -162,7 +174,7 @@ plot_yield_curve(var_sim, models)
 library(gganimate)
 
 yield_long <- full_ir %>%
-  dplyr::select(date, three_month, one_year, two_year, three_year, five_year, seven_year, ten_year, thirty_year) %>%
+  dplyr::select(date, three_month, one_year, two_year, three_year, five_year, seven_year, ten_year, twenty_year, thirty_year) %>%
   pivot_longer(
     cols = -date,
     names_to = "maturity",
@@ -177,6 +189,7 @@ yield_long <- full_ir %>%
       maturity == "five_year" ~ 5,
       maturity == "seven_year" ~ 7,
       maturity == "ten_year" ~ 10,
+      maturity == "twenty_year" ~ 20,
       maturity == "thirty_year" ~ 30
     )
   )
@@ -184,7 +197,7 @@ yield_long <- full_ir %>%
 p <- ggplot(yield_long, aes(x = maturity_years, y = yield)) +
   geom_smooth(color = "blue", se = FALSE) +
   geom_point() +
-  scale_x_continuous(breaks = c(0.25, 1, 2, 3, 5, 7, 10, 30)) +
+  scale_x_continuous(breaks = c(0.25, 1, 2, 3, 5, 7, 10, 20, 30)) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
   labs(
     title = 'US Yield Curve on: {current_frame}',

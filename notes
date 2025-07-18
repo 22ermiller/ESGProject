@@ -209,8 +209,8 @@ maybe correlation?
 regress multiple interest rates on level, slope, and curve
 
 Notes:
-20 year securities didn't have data from 1990-95ish
 We are saying that the slope and curve don't have any relationship with the level since we are modeling short rate independent?
+Should I have an intercept term in the linear models?
 
 
 

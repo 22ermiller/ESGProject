@@ -20,6 +20,8 @@ ir10yr_raw <- read_csv("raw_data/DGS10.csv")
 
 ir30yr_raw <- read_csv("raw_data/DGS30.csv")
 
+ir20yr_raw <- read_csv("raw_data/DGS20.csv")
+
 ir1yr_raw <- read_csv("raw_data/DGS1.csv")
 
 ir2yr_raw <- read_csv("raw_data/DGS2(1).csv")
@@ -152,6 +154,21 @@ ir7yr <- ir7yr_raw |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
   select(date, rate)
 
+ir20yr <- ir20yr_raw |>
+  rename(date = observation_date,
+         rate = DGS20) |> 
+  filter(!is.na(rate)) |> 
+  mutate(year = year(date),
+         month = month(date),
+         day = day(date)) |> 
+  group_by(year, month) |> 
+  arrange(day) |> 
+  slice_head(n = 1) |> 
+  ungroup() |> 
+  mutate(date = floor_date(date, unit = "month")) |>
+  filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
+  dplyr::select(date, rate)
+
 
 
 # Save Data ---------------------------------------------------------------
@@ -164,4 +181,5 @@ write_csv(ir2yr, "data/ir2yr.csv")
 write_csv(ir3yr, "data/ir3yr.csv")
 write_csv(ir5yr, "data/ir5yr.csv")
 write_csv(ir7yr, "data/ir7yr.csv")
+write_csv(ir20yr, "data/ir20yr.csv")
 
