@@ -47,7 +47,7 @@ ir3mo <- ir3mo_raw |>
   ungroup() |> 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
-  select(date, rate)
+  dplyr::select(date, rate)
 
 ir10yr <- ir10yr_raw |> 
   rename(date = observation_date,
@@ -62,7 +62,7 @@ ir10yr <- ir10yr_raw |>
   ungroup() |> 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
-  select(date, rate)
+  dplyr::select(date, rate)
 
 ir30yr <- ir30yr_raw |> 
   rename(date = observation_date,
@@ -77,7 +77,7 @@ ir30yr <- ir30yr_raw |>
   ungroup() |> 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
-  select(date, rate)
+  dplyr::select(date, rate)
 
 ir1yr <- ir1yr_raw |> 
   rename(date = observation_date,
@@ -92,7 +92,7 @@ ir1yr <- ir1yr_raw |>
   ungroup() |> 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
-  select(date, rate)
+  dplyr::select(date, rate)
 
 ir2yr <- ir2yr_raw |>
   rename(date = observation_date,
@@ -107,7 +107,7 @@ ir2yr <- ir2yr_raw |>
   ungroup() |> 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
-  select(date, rate)
+  dplyr::select(date, rate)
 
 ir3yr <- ir3yr_raw |>
   rename(date = observation_date,
@@ -122,7 +122,7 @@ ir3yr <- ir3yr_raw |>
   ungroup() |> 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
-  select(date, rate)
+  dplyr::select(date, rate)
 
 ir5yr <- ir5yr_raw |>
   rename(date = observation_date,
@@ -137,7 +137,7 @@ ir5yr <- ir5yr_raw |>
   ungroup() |> 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
-  select(date, rate)
+  dplyr::select(date, rate)
 
 ir7yr <- ir7yr_raw |>
   rename(date = observation_date,
@@ -152,7 +152,7 @@ ir7yr <- ir7yr_raw |>
   ungroup() |> 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
-  select(date, rate)
+  dplyr::select(date, rate)
 
 ir20yr <- ir20yr_raw |>
   rename(date = observation_date,
@@ -169,6 +169,17 @@ ir20yr <- ir20yr_raw |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
   dplyr::select(date, rate)
 
+full_ir <- ir3mo |>
+  rename(three_month = rate) |> 
+  left_join(ir1yr |> rename(one_year = rate), by = "date") |>
+  left_join(ir2yr |> rename(two_year = rate), by = "date") |>
+  left_join(ir3yr |> rename(three_year = rate), by = "date") |>
+  left_join(ir5yr |> rename(five_year = rate), by = "date") |>
+  left_join(ir7yr |> rename(seven_year = rate), by = "date") |>
+  left_join(ir10yr |> rename(ten_year = rate), by = "date") |> 
+  left_join(ir20yr |> rename(twenty_year = rate), by = "date") |>
+  left_join(ir30yr |> rename(thirty_year = rate), by = "date")
+
 
 
 # Save Data ---------------------------------------------------------------
@@ -182,4 +193,5 @@ write_csv(ir3yr, "data/ir3yr.csv")
 write_csv(ir5yr, "data/ir5yr.csv")
 write_csv(ir7yr, "data/ir7yr.csv")
 write_csv(ir20yr, "data/ir20yr.csv")
+write_csv(full_ir, "data/full_ir.csv")
 

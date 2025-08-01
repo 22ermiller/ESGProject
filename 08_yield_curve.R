@@ -6,30 +6,11 @@ library(rugarch)
 library(tsDyn)
 
 # Read in Data
-ir3mo <- read_csv("data/ir3mo.csv") |> rename(three_month = rate)
-ir10yr <- read_csv("data/ir10yr.csv") |> rename(ten_year = rate)
-ir30yr <- read_csv("data/ir30yr.csv") |> rename(thirty_year = rate)
-ir20yr <- read_csv("data/ir20yr.csv") |> rename(twenty_year = rate)
-ir1yr <- read_csv("data/ir1yr.csv") |> rename(one_year = rate)
-ir2yr <- read_csv("data/ir2yr.csv") |> rename(two_year = rate)
-ir3yr <- read_csv("data/ir3yr.csv") |> rename(three_year = rate)
-ir5yr <- read_csv("data/ir5yr.csv") |> rename(five_year = rate)
-ir7yr <- read_csv("data/ir7yr.csv") |> rename(seven_year = rate)
 
-r_bar <- .005
-
-full_ir <- ir3mo %>%
-  left_join(ir10yr, by = "date") |> 
-  left_join(ir1yr, by = "date") |>
-  left_join(ir2yr, by = "date") |>
-  left_join(ir3yr, by = "date") |>
-  left_join(ir5yr, by = "date") |>
-  left_join(ir7yr, by = "date") |>
-  left_join(ir20yr, by = "date") |>
-  left_join(ir30yr, by = "date") |> 
+full_ir <- read_csv("data/full_ir.csv") |> 
   mutate(across(three_month:thirty_year, ~./100)) |> 
-  mutate(across(three_month:thirty_year, ~ifelse(. == 0, .0001, .))) |> # can't have 0 for transformation
-  mutate(across(three_month:thirty_year, ~ifelse(. > r_bar, ., r_bar - r_bar*log(r_bar) + r_bar * log(.)))) |> # transformation
+  # mutate(across(three_month:thirty_year, ~ifelse(. == 0, .0001, .))) |> # can't have 0 for transformation
+  # mutate(across(three_month:thirty_year, ~ifelse(. > r_bar, ., r_bar - r_bar*log(r_bar) + r_bar * log(.)))) |> # transformation
   # calculate slope and curvature
   mutate(slope = thirty_year - three_month,
          curve = three_month + thirty_year - (2*ten_year))
@@ -44,6 +25,7 @@ X_ts <- ts(X, start = c(min(year(full_ir$date)), month(min(full_ir$date))), freq
 var_model <- lineVar(X_ts, lag = 1, include = "const")
 
 summary(var_model)
+saveRDS(var_model, "models/yield_curve_var_mod.rds")
 
 # Forecasting -------------------------------------------------------------
 
@@ -121,8 +103,55 @@ model_summaries <- lapply(models, summary)
 
 model_summaries
 
+saveRDS(models, "models/yield_curve_lm_mods.rds")
+
 # extract coefficients from all models
 coef_matrix <- sapply(models, function(model) coef(model))
+
+# In sample prediction
+
+plot_insample_curve <- function(models) {
+  # randomly sample 1 row from var_sim
+  
+  sample_row <- sample(1:nrow(full_ir), 1)
+  sample_slope <- full_ir$slope[sample_row]
+  sample_curve <- full_ir$curve[sample_row]
+  sample_level <- full_ir$three_month[sample_row]
+  
+  # predict on all models
+  new_df <- data.frame(three_month = sample_level, slope = sample_slope, curve = sample_curve)
+  one_year_pred <- predict(models[[1]], newdata = new_df)
+  two_year_pred <- predict(models[[2]], newdata = new_df)
+  three_year_pred <- predict(models[[3]], newdata = new_df)
+  five_year_pred <- predict(models[[4]], newdata = new_df)
+  seven_year_pred <- predict(models[[5]], newdata = new_df)
+  twenty_year_pred <- predict(models[[6]], newdata = new_df)
+  thirty_year_pred <- sample_level + sample_slope
+  ten_year_pred <- sample_level + (sample_slope - sample_curve)/2
+  
+  # put in df with 1 column as time, and other column as rate
+  pred_df <- data.frame(
+    time = c(3/12, 1, 2, 3, 5, 7, 10, 20, 30),
+    rate = c(sample_level, one_year_pred, two_year_pred, three_year_pred,
+             five_year_pred, seven_year_pred, ten_year_pred, twenty_year_pred, thirty_year_pred)
+  )
+  
+  actual_df <- full_ir[sample_row,] |> 
+    pivot_longer(cols = three_month:thirty_year) |> 
+    dplyr::select(rate = value, date) |> 
+    mutate(time = c(3/12, 1, 2, 3, 5, 7, 10, 20, 30))
+  
+  #plot(yield_curve_df$time, yield_curve_df$rate)
+  ggplot() +
+    geom_point(data = pred_df, aes(x = time, y = rate), color = "blue") +
+    geom_point(data = actual_df, aes(x = time, y = rate), color = "red") +
+    
+    labs(subtitle = paste0("Date: ", actual_df$date[1]))
+  
+}
+
+plot_insample_curve(models)
+
 
 # plot a "yield curve"
 
@@ -156,7 +185,7 @@ plot_yield_curve <- function(var_sim, models) {
   #plot(yield_curve_df$time, yield_curve_df$rate)
   ggplot(data = yield_curve_df) +
     geom_point(aes(x = time, y = rate)) +
-    geom_smooth(aes(x = time, y = rate), se = FALSE) +
+    #geom_smooth(aes(x = time, y = rate), se = FALSE) +
     labs(subtitle = paste0("Slope: ", sample_slope, ". Curve: ", sample_curve))
   
 }
@@ -195,7 +224,7 @@ yield_long <- full_ir %>%
   )
 
 p <- ggplot(yield_long, aes(x = maturity_years, y = yield)) +
-  geom_smooth(color = "blue", se = FALSE) +
+  #geom_smooth(color = "blue", se = FALSE) +
   geom_point() +
   scale_x_continuous(breaks = c(0.25, 1, 2, 3, 5, 7, 10, 20, 30)) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +

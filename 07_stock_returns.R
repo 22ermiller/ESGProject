@@ -52,7 +52,7 @@ interest_df <- read_csv("data/interest_rate.csv") |>
   arrange(day) |> 
   slice_head(n = 1) |> 
   ungroup() |> 
-  select(-c(year,month,day)) %>% 
+  dplyr::select(-c(year,month,day)) %>% 
   mutate(date = floor_date(date, unit = "month")) |>
   filter(date >= min(cpi_df$date) - months(1) & date <= max(cpi_df$date)) |> 
   mutate(lagged_rate = lag(rate, n = 1)) |> 
@@ -188,7 +188,10 @@ summary(mean_mod)
 summary(mean_mod2)
 summary(mean_mod3)
 
+saveRDS(mean_mod, "models/equity_mean_mod.rds")
+
 mean_mod_resids <- resid(mean_mod)
+saveRDS(mean_mod_resids, "models/mean_mod_resids.rds")
 mean_mod2_resids <- resid(mean_mod2)
 mean_mod3_resids <- resid(mean_mod3)
 
@@ -239,6 +242,9 @@ summary(mean_mod3_rs)
 summary(cpi_mean_mod1_rs)
 summary(cpi_mean_mod2_rs)
 summary(cpi_mean_mod3_rs)
+
+saveRDS(mean_mod1_rs, "models/equity_rs_mod.rds")
+saveRDS(list(spec = spec, data = mean_mod_resids), "models/equity_rs_mod_specs.rds")
 
 
 # Simulations -------------------------------------------------------------

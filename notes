@@ -212,6 +212,11 @@ Notes:
 We are saying that the slope and curve don't have any relationship with the level since we are modeling short rate independent?
 Should I have an intercept term in the linear models?
 
+Meeting Notes:
+Backtransform the rates to compare to actual data
+try and fit VAR and Yield Curve models on untransformed rates
+
+
 
 
 
