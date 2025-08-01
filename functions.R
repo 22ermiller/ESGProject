@@ -137,7 +137,7 @@ ir3mo_multiple_sims <- function(model, sim_length, nsims, cpi_sims, mean_rate) {
 
 get_final_slope_curve_vals <- function(ir_df) {
   list(slope = tail(ir_df$slope, 1),
-       curve = tail(full_ir$curve, 1))
+       curve = tail(ir_df$curve, 1))
 }
 
 yield_single_sim <- function(var_mod, lm_mods, sim_length, ir3mo_sim, final_vals) {

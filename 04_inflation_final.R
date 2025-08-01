@@ -11,7 +11,7 @@ library(timetk)
 cpi_raw <- read_csv("data/cpi.csv")
 
 cpi_df <- read_csv("data/cpi.csv") |> 
-  filter(date >= "2010-01-01") |> # only dates from 2010 onwards
+  filter(date >= "1990-01-01") |> # only dates from 2010 onwards
   mutate(lagged_cpi = lag(cpi, n = 1)) |> 
   mutate(log_dif_cpi = log(cpi) - log(lagged_cpi)) |> 
   filter(!is.na(log_dif_cpi)) # remove first observation without lag
@@ -79,7 +79,7 @@ saveRDS(arima_model_wlagcpi, "models/eci_mod.rds")
 
 # Get draws of the model 
 
-n_sims <- 1000
+n_sims <- 200
 sim_length <- 4*30
 full_model_sims <- matrix(NA, nrow = n_sims, ncol = sim_length)
 
