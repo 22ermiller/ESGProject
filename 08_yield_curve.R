@@ -7,10 +7,12 @@ library(tsDyn)
 
 # Read in Data
 
+r_bar <- .005
+
 full_ir <- read_csv("data/full_ir.csv") |> 
   mutate(across(three_month:thirty_year, ~./100)) |> 
-  # mutate(across(three_month:thirty_year, ~ifelse(. == 0, .0001, .))) |> # can't have 0 for transformation
-  # mutate(across(three_month:thirty_year, ~ifelse(. > r_bar, ., r_bar - r_bar*log(r_bar) + r_bar * log(.)))) |> # transformation
+  mutate(across(three_month:thirty_year, ~ifelse(. == 0, .0001, .))) |> # can't have 0 for transformation
+  mutate(across(three_month:thirty_year, ~ifelse(. > r_bar, ., r_bar - r_bar*log(r_bar) + r_bar * log(.)))) |> # transformation
   # calculate slope and curvature
   mutate(slope = thirty_year - three_month,
          curve = three_month + thirty_year - (2*ten_year))
@@ -22,7 +24,7 @@ X <- cbind(slope = full_ir$slope, curve = full_ir$curve)
 
 X_ts <- ts(X, start = c(min(year(full_ir$date)), month(min(full_ir$date))), frequency = 12)
 
-var_model <- lineVar(X_ts, lag = 1, include = "const")
+var_model <- lineVar(X_ts, lag = 1, include = "const", exogen = full_ir$three_month)
 
 summary(var_model)
 saveRDS(var_model, "models/yield_curve_var_mod.rds")
@@ -41,12 +43,14 @@ cpi_sim <- matrix(simulate(cpi_mod, nsim = sim_length), ncol = 1)
 ir3mo_sim <- ugarchsim(ir3mo_mod, n.sim = sim_length, startMethod = "sample", mexsimdata = list(cpi_sim))@simulation$seriesSim +
   mean(full_ir$three_month)
 
+
 # Do I need to incorporate the covariance matrix in the simulation
 sample_cov <- cov(var_model$residuals)
 var_sim <- VAR.sim(var_model$coefficients,
                    n = 400, 
                    starting = matrix(c(tail(full_ir$slope, 1), tail(full_ir$curve, 1)), nrow = 1),
-                   varcov = sample_cov)
+                   varcov = sample_cov,
+                   exogen = ir3mo_sim)
 
 
 plot(var_sim[,1], type = "l")
@@ -54,8 +58,10 @@ plot(var_sim[,2], type = "l")
 
 # Multiple simulations
 
-n_sim = 1000
-sim_length = 400
+
+
+n_sim = 100
+sim_length = 480
 
 slope_sim <- matrix(NA, nrow = n_sim, ncol = sim_length)
 curve_sim <- matrix(NA, nrow = n_sim, ncol = sim_length)
@@ -64,7 +70,9 @@ for (i in 1:n_sim) {
   var_sim <- VAR.sim(var_model$coefficients,
                      n = sim_length,
                      starting = matrix(c(tail(full_ir$slope, 1), tail(full_ir$curve, 1)), nrow = 1),
-                     varcov = sample_cov)
+                     varcov = sample_cov,
+                     exogen = ir3mo_sims[i,]
+                     )
   
   slope_sim[i, ] <- var_sim[,1]
   curve_sim[i, ] <- var_sim[,2]
@@ -162,7 +170,7 @@ plot_yield_curve <- function(var_sim, models) {
   sample_curve <- var_sim[sample_row, 2]
   
   # get random 3mo "level"
-  sample_level <- sample(full_ir$three_month, size = 1)
+  sample_level <- ir3mo_sim[sample_row]
   
   # predict on all models
   new_df <- data.frame(three_month = sample_level, slope = sample_slope, curve = sample_curve)
@@ -181,6 +189,11 @@ plot_yield_curve <- function(var_sim, models) {
     rate = c(sample_level, one_year_pred, two_year_pred, three_year_pred,
              five_year_pred, seven_year_pred, ten_year_pred, twenty_year_pred, thirty_year_pred)
   )
+  
+  # back_transform
+  yield_curve_df <- yield_curve_df %>%
+    mutate(rate = ifelse(rate > r_bar, rate,
+                         r_bar - r_bar * log(r_bar) + r_bar * log(rate)))
   
   #plot(yield_curve_df$time, yield_curve_df$rate)
   ggplot(data = yield_curve_df) +

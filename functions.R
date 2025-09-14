@@ -98,12 +98,10 @@ get_average_3mo_rate <- function(interest_df) {
 }
 
 back_transform <- function(x) {
-  r_bar <- .005
-  if(x > r_bar){
-    return(x)
-  } else {
-    return(exp((x - r_bar + r_bar*log(r_bar))/r_bar))
-  }
+  r_bar <- 0.005
+  ifelse(x > r_bar,
+         x,
+         exp((x - r_bar + r_bar * log(r_bar)) / r_bar))
 }
 
 ir3mo_single_sim <- function(model, sim_length, cpi_sim, mean_rate) {
@@ -142,28 +140,34 @@ get_final_slope_curve_vals <- function(ir_df) {
 
 yield_single_sim <- function(var_mod, lm_mods, sim_length, ir3mo_sim, final_vals) {
   
+  r_bar <- 0.005
+  
+  transformed_3mo <- ifelse(ir3mo_sim > r_bar, ir3mo_sim,
+                            r_bar - r_bar*log(r_bar) + r_bar * log(ir3mo_sim))
+  
   sample_cov <- cov(var_mod$residuals)
   var_sim <- VAR.sim(var_mod$coefficients,
                      n = sim_length, 
                      starting = matrix(c(final_vals$slope, final_vals$curve), nrow = 1),
-                     varcov = sample_cov)
-  three_month <- ir3mo_sim
+                     varcov = sample_cov,
+                     exogen = transformed_3mo)
+  three_month <- transformed_3mo
   slope <- var_sim[,1]
   curve <- var_sim[,2]
   
-  new_df <- data.frame(three_month = three_month,
+  new_df <- data.frame(three_month = transformed_3mo,
                        slope = slope,
                        curve = curve)
   
   preds <- sapply(lm_mods, function(model) predict(model, newdata = new_df))
   
   # Add 10yr and 30yr yield (derived from slope and curve)
-  ten_year <- three_month + (slope - curve)/2
-  thirty_year <- three_month + slope
+  ten_year <- transformed_3mo + (slope - curve)/2
+  thirty_year <- transformed_3mo + slope
   
   # Create full yield curve paths (time series format)
   yield_curve <- data.frame(
-    three_month = three_month,
+    three_month = transformed_3mo,
     one_year = preds[, 1],
     two_year = preds[, 2],
     three_year = preds[, 3],
@@ -174,9 +178,21 @@ yield_single_sim <- function(var_mod, lm_mods, sim_length, ir3mo_sim, final_vals
     thirty_year = thirty_year
   )
   
-  return(yield_curve)
+  final_yield_curve <- yield_curve |> 
+    mutate(across(three_month:thirty_year, back_transform))
+  
+  return(final_yield_curve)
 }
 
+yield_multiple_sims <- function(var_mod, lm_mods, sim_length, n_sims, ir3mo_sims, final_vals) {
+  sims <- vector("list", n_sims)
+  
+  for (i in 1:n_sims) {
+    sims[[i]] <- yield_single_sim(var_mod, lm_mods, sim_length, ir3mo_sims[i,], final_vals)
+  }
+  
+  return(sims)
+}
 
 # Equity Returns -----------------------------------------------------------
 
@@ -212,3 +228,98 @@ equity_multiple_sims <- function(mean_mod, rs_mod, sim_length, nsims, cpi_sims, 
   return(sims)
 }
 
+
+# Annuity Pricing Functions -----------------------------------------------
+
+get_yield_df <- function(yield_curve) {
+  yield_curve_df <- yield_curve %>%
+    pivot_longer(three_month:thirty_year, names_to = "time", values_to = "rate") %>%
+    mutate(time = case_when(time == "three_month" ~ 3/12,
+                            time == "one_year" ~ 1,
+                            time == "two_year" ~ 2,
+                            time == "three_year" ~ 3,
+                            time == "five_year" ~ 5,
+                            time == "seven_year" ~ 7,
+                            time == "ten_year" ~ 10,
+                            time == "twenty_year" ~ 20,
+                            time == "thirty_year" ~ 30
+    ))
+  return(yield_curve_df)
+}
+
+
+interpolate_rate <- function(curve_df, target_month) {
+  
+  target_time <- target_month/12
+  
+  # Ensure sorted by maturity
+  curve_df <- curve_df %>% arrange(time)
+  
+  # If exactly matches a maturity, return directly
+  if (target_time %in% curve_df$time) {
+    return(curve_df$rate[curve_df$time == target_time])
+  } else if (target_time < min(curve_df$time)) { # if target time is below minimum time, return minimum time rate
+    return(curve_df$rate[curve_df$time == min(curve_df$time)])
+  } else if (target_time > max(curve_df$time)) { # if target time is above maximum time, return maximum time rate
+    return(curve_df$rate[curve_df$time == max(curve_df$time)])
+  }
+  
+  lower <- max(curve_df$time[curve_df$time < target_time])
+  upper <- min(curve_df$time[curve_df$time > target_time])
+  
+  rate_lower <- curve_df$rate[curve_df$time == lower]
+  rate_upper <- curve_df$rate[curve_df$time == upper]
+  
+  slope <- (rate_upper - rate_lower) / (upper - lower)
+  interpolated <- rate_lower + slope * (target_time - lower)
+  
+  return(interpolated)
+}
+
+price_annuity <- function(start_age, yield_curve, mortality_tbl, payout, load) {
+  
+  # get yield_curve_df
+  yield_curve_df <- get_yield_df(yield_curve[1,])
+  
+  # set mortality for starting age
+  if(start_age*12 >= min(mortality_tbl$month)-1) {
+    mortality_tbl_clipped <- mortality_tbl %>%
+      filter(month >= start_age*12)
+  } else {
+    stop("start_age must be at least 50")
+  }
+  
+  # define length (from mortality table probabilities)
+  length <- nrow(mortality_tbl_clipped)
+  
+  # create a sequence of months from 1-length
+  months_seq <- seq(1, length)
+  
+  # put month sequence in rate interpolation function
+  interpolated_rates <- map_dbl(months_seq, ~interpolate_rate(yield_curve_df, .x))
+  
+  
+  
+  pricing_df <- data.frame(month = months_seq, rate = interpolated_rates) %>%
+    mutate(discount = (1 + rate)^(-month / 12),
+           survival_prob = mortality_tbl_clipped$S,
+           epv = discount*survival_prob)
+  
+  # calculate price
+  total_epv <- sum(pricing_df$epv)*payout
+  load <- .1
+  price <- total_epv*(1+load)
+  
+  return(price)
+}
+
+price_annuities <- function(start_age, yield_curves, mortality_tbl, payout, load, n_sims) {
+  prices <- vector("numeric", n_sims)
+  
+  for (i in 1:n_sims) {
+    prices[i] <- price_annuity(start_age, yield_curves[[i]], mortality_tbl, payout, load)
+    print(i)
+  }
+  
+  return(prices)
+}

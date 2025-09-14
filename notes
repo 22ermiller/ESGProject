@@ -216,7 +216,23 @@ Meeting Notes:
 Backtransform the rates to compare to actual data
 try and fit VAR and Yield Curve models on untransformed rates
 
+Meeting Notes:
+Some negative values in yield curve predictions, try transforming all rates
+
+Notes:
+How many simulations should we run to feel good about the estimates of the tails
 
 
+Meeting Notes:
+add in loop case when value goes to 0
+mortality: 
 
+Meeting Notes:
+functionality to start annuity at different ages
 
+Notes:
+Create functions to optimize over where the functions represent different scenarios/goals
+The main "parameter" we are interested in is probability of success. How do we quantify uncertainty in this parameter?
+Is it a monte carlo standard error?
+Around .067-.069 is area where things start changing
+.07 and beyond all money in stock market has higher success rate

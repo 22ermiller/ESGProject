@@ -31,11 +31,11 @@ Many different ESG structures have been proposed in the financial literature. Ou
 
 ### Model Selection Criteria
 
-As previously alluded to, models for the ESG were primarily based on models used in existing ESG literature. For our use case, factors most important in model selection (ordered by relative importance) are 
+As previously alluded to, models for the ESG were primarily based on models used in existing ESG literature. For our use case, factors most important in model selection (ordered by relative importance) are
 
-a) the behavior of simulated draws
-b) model fit
-c) model parsimony
+a)  the behavior of simulated draws
+b)  model fit
+c)  model parsimony
 
 As is described in Begin 2021, from an out-of-sample perspective, simpler models underlying an ESG perform better or similar to complex methods. Because of this, we try to keep our models as parsimonious as possible while still maintaining good model fit and reasonable simulated draws.
 
@@ -45,9 +45,9 @@ The base level of our cascade-structure ESG is inflation. Unique to our use-case
 
 #### General Inflation
 
-We measure general inflation with the consumer price index (CPI) without medical goods. Let $\text{CPI}_t$ denote the index at time $t$. Because CPI is non-stationary and generally increases over time, we model changes in CPI rather than its level. Specifically, we consider the log-ratio: 
+We measure general inflation with the consumer price index (CPI) without medical goods. Let $\text{CPI}_t$ denote the index at time $t$. Because CPI is non-stationary and generally increases over time, we model changes in CPI rather than its level. Specifically, we consider the log-ratio:
 
-$$q_t = \log{\frac{\text{CPI}_t}{\text{CPI}_{t-1}}}$$ 
+$$q_t = \log{\frac{\text{CPI}_t}{\text{CPI}_{t-1}}}$$
 
 We assume that $q_t$​ follows an ARMA(1,1) process with constant mean, defined as:
 
@@ -59,20 +59,17 @@ Here $\phi$ represents the auto-regressive component and $\theta$ represents the
 
 #### Medical Inflation
 
-We measure medical inflation using a consumer price index for just medical care. Let $\text{MedCPI}_t$ denote the index at time $t$. The same way we modeled general inflation, we model medical inflation as a log-ratio: 
+We measure medical inflation using a consumer price index for just medical care. Let $\text{MedCPI}_t$ denote the index at time $t$. The same way we modeled general inflation, we model medical inflation as a log-ratio:
 
-$$m_t = \log{\frac{\text{MedCPI}_t}{\text{MedCPI}_{t-1}}}$$
-Where $m_t$ follows an ARMA(1,1) process with a constant mean.
+$$m_t = \log{\frac{\text{MedCPI}_t}{\text{MedCPI}_{t-1}}}$$ Where $m_t$ follows an ARMA(1,1) process with a constant mean.
 
 #### Wage Inflation
 
-We measure wage inflation using the employee cost index (ECI). Let $\text{ECI}_t$ denote the index at time $t$. Similar to the previous two inflation measures, we take the log-ratio of wage inflation:
-$$w_t = \log{\frac{\text{ECI}_t}{\text{ECI}_{t-1}}}$$
-We found, however, that the $w_t$ series was still non-stationary per the Augmented Dickey-Fuller Test (p-value = .5703), rendering potential fitted coefficients for an ARMA process unreliable. To account for this we difference $w_t$ and model:
+We measure wage inflation using the employee cost index (ECI). Let $\text{ECI}_t$ denote the index at time $t$. Similar to the previous two inflation measures, we take the log-ratio of wage inflation: $$w_t = \log{\frac{\text{ECI}_t}{\text{ECI}_{t-1}}}$$ We found, however, that the $w_t$ series was still non-stationary per the Augmented Dickey-Fuller Test (p-value = .5703), rendering potential fitted coefficients for an ARMA process unreliable. To account for this we difference $w_t$ and model:
 
 $$\Delta w_t = w_t - w_{t-1}$$
 
-Where $\Delta w_t$​ follows an ARMA(1,1) process with constant mean, and, per our cascading structure, general inflation is included as an external regressor:
+Where $\Delta w_t$​ follows an ARMA(1,1) process with constant mean, and, per our cascading structure, general inflation ($q$) is included as an external regressor:
 
 $$\Delta w_t = \mu + q_{t-1} + \phi \Delta w_{t-1} + \theta\epsilon_{t-1} + \epsilon_t$$
 
