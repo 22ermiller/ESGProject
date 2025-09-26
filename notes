@@ -231,8 +231,46 @@ Meeting Notes:
 functionality to start annuity at different ages
 
 Notes:
-Create functions to optimize over where the functions represent different scenarios/goals
+Create functions to optimize over, where the functions represent different scenarios/goals
 The main "parameter" we are interested in is probability of success. How do we quantify uncertainty in this parameter?
 Is it a monte carlo standard error?
 Around .067-.069 is area where things start changing
 .07 and beyond all money in stock market has higher success rate
+
+Meeting Notes:
+investigate point where all lines cross: does it stay the same with different equity returns
+adjust smoothing in plot (100% annuitization is either 1 or 0)
+male vs. female
+adjusting withdrawal rates
+
+Lit Review Topics:
+ESG
+Economic Variable Modeling
+Asset Allocation
+
+Notes:
+looking at scatterplot, 100% annuitization doesn't go from 0 directly to 1. There is some success_rate in between.
+  This is due to different levels of inflation im assuming?
+Where can I get data on medical expenses based on age
+Writing the model specification for the yield curve: I'm including an intercept term in the model. Could I call this an "adjustment term"?
+
+Meeting Notes:
+What is the relationship between the coefficients across the different linear models for each interest rate? (show in a table)
+look into behavior of yield curve models without intercept
+intervals on the mean_value_at_death
+apply percentage of expenses that go to medical to medical inflation
+
+Notes:
+Removing the intercepts, model fit (r squared) is almost the exact same. Quantiles of annuity prices are the exact same (.25,.5,.75)
+According to: https://www.urban.org/sites/default/files/publication/51766/411130-understanding-expenditure-patterns-in-retirement.pdf
+  married adults over 65 spend 20% on health care
+  nonmarried adults spend 16%
+implemented 18% of expenses to medical costs and success rates barely shifted lower (medical inflation tends to be a little higher than CPI)
+created table of coefficients for the yield curve model
+
+
+
+
+
+
+

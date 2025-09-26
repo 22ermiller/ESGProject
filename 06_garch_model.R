@@ -378,7 +378,3 @@ single_inflation_simulation()
 
 
 
-
-
-
-

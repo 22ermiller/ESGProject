@@ -98,12 +98,12 @@ abline(h = mean(full_ir$curve), col = "blue", lty = 2)
 
 # Yield Curve Weightings --------------------------------------------------
 
-one_year.lm <- lm(one_year ~ three_month + slope + curve, data = full_ir)
-two_year.lm <- lm(two_year ~ three_month + slope + curve, data = full_ir)
-three_year.lm <- lm(three_year ~ three_month + slope + curve, data = full_ir)
-five_year.lm <- lm(five_year ~ three_month + slope + curve, data = full_ir)
-seven_year.lm <- lm(seven_year ~ three_month + slope + curve, data = full_ir)
-twenty_year.lm <- lm(twenty_year ~ three_month + slope + curve, data = full_ir)
+one_year.lm <- lm(one_year ~ -1 + three_month + slope + curve, data = full_ir)
+two_year.lm <- lm(two_year ~ -1 + three_month + slope + curve, data = full_ir)
+three_year.lm <- lm(three_year ~ -1 + three_month + slope + curve, data = full_ir)
+five_year.lm <- lm(five_year ~ -1 + three_month + slope + curve, data = full_ir)
+seven_year.lm <- lm(seven_year ~ -1 + three_month + slope + curve, data = full_ir)
+twenty_year.lm <- lm(twenty_year ~ -1 + three_month + slope + curve, data = full_ir)
 
 # summary of all models
 models <- list(one_year.lm, two_year.lm, three_year.lm, five_year.lm, seven_year.lm, twenty_year.lm)
@@ -112,6 +112,33 @@ model_summaries <- lapply(models, summary)
 model_summaries
 
 saveRDS(models, "models/yield_curve_lm_mods.rds")
+
+# create table of coefficients
+coef_df <- tibble(three_month = as.numeric(),
+                  slope = as.numeric(),
+                  curve = as.numeric())
+
+for (i in 1:length(models)) {
+  coef <- models[[i]]$coef
+  coef_df <- coef_df %>% bind_rows(coef)
+}
+
+extra_rows <- tibble(
+  time  = c(3/12,10,30),
+  level = c(1,1,1),
+  slope = c(0,0.5,1),
+  curve = c(0,-0.5,0)
+)
+
+final_coef_df <- coef_df %>%
+  rename(level = three_month) %>%
+  mutate(time = c(1,2,3,5,7,20)) %>%
+  dplyr::select(time, everything()) %>%
+  bind_rows(
+    extra_rows
+  ) %>%
+  arrange(time)
+
 
 # extract coefficients from all models
 coef_matrix <- sapply(models, function(model) coef(model))

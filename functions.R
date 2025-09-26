@@ -64,7 +64,7 @@ eci_multiple_sims <- function(model, sim_length, nsims, cpi_sims, final_cpi_valu
 # Medical Inflation -------------------------------------------------------
 
 med_single_sim <- function(model, sim_length) {
-  simulate(model, nsim = sim_length)
+  stats::simulate(model, nsim = sim_length)
 }
 
 med_multiple_sims <- function(model, sim_length, n_sims) {

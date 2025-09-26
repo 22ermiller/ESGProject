@@ -219,7 +219,18 @@ equity_gross <- exp(equity_sims)
 rowMeans(equity_gross)
 matrix_cpi_sims <- do.call(rbind, cpi_sims)
 price_level <- t(apply(matrix_cpi_sims, 1, function(x) cumprod(exp(x))))
-price_level[,n_years*12]
+end_cpi <- price_level[,n_years*12]
+
+
+matrix_med_sims <- do.call(rbind, med_sims)
+price_level <- t(apply(matrix_med_sims, 1, function(x) cumprod(exp(x))))
+end_med_inflation <- price_level[,n_years*12]
+
+# overlay density plots of end_cpi and end_med_inflation
+plot(density(end_cpi), main = "Inflation Comparison after 40 years", xlab = "Index Value", ylim = c(0,1.7))
+lines(density(end_med_inflation), col = "red")
+legend("topright", legend = c("CPI", "Medical Inflation"), col = c("black", "red"), lty = 1)
+
 
 # Set starting portfolio value
 starting_value <- 100
@@ -285,63 +296,87 @@ mean(portfolio_df$success_no_death)
 portfolio_df |> count(success)
 portfolio_df |> count(success_no_death)
 
-portfolio_sim <- function(annuity_prop, withdrawal_rate, annuity_prices, equity_sims, cpi_sims, death_ages) {
+
+portfolio_sim_vec <- function(annuity_prop, withdrawal_rate, annuity_prices, equity_sims, cpi_sims, med_sims, death_ages) {
   
-  # Multiple sims
+  n_sims <- nrow(equity_sims)
+  T <- ncol(equity_sims)
   
+  # Convert log returns to gross returns
   equity_gross <- exp(equity_sims)
-  rowMeans(equity_gross)
+  
+  # Price level from CPI simulations
   matrix_cpi_sims <- do.call(rbind, cpi_sims)
   price_level <- t(apply(matrix_cpi_sims, 1, function(x) cumprod(exp(x))))
-  price_level[,n_years*12]
+  matrix_med_sims <- do.call(rbind, med_sims)
+  med_price_level <- t(apply(matrix_med_sims, 1, function(x) cumprod(exp(x))))
   
-  # Set starting portfolio value
+  
+  # Starting portfolio
   starting_value <- 100
-  
-  # 60% stock 40% annuities
-  annuity_amt <- starting_value*annuity_prop
+  annuity_amt <- starting_value * annuity_prop
   stock_market_amt <- starting_value - annuity_amt
+  monthly_annuity_payout <- rep(annuity_amt, n_sims) / annuity_prices
+  withdrawal_amt <- rep(starting_value, n_sims) * (withdrawal_rate / 12)
   
-  monthly_annuity_payout <- rep(annuity_amt, n_sims) / prices
-  
-  withdrawal_amt <- rep(starting_value, n_sims)*rep((withdrawal_rate/12), n_sims) - monthly_annuity_payout
-  
-  
-  T <- ncol(equity_gross)
-  n_sims <- nrow(equity_gross)
-  
+  # Initialize portfolio matrix
   portfolio_value <- matrix(NA, nrow = n_sims, ncol = T)
   
   # Period 1
-  portfolio_value[, 1] <- (stock_market_amt - price_level[, 1]*withdrawal_amt) * equity_gross[, 1]
+  portfolio_value[, 1] <- (stock_market_amt - ((price_level[, 1] * withdrawal_amt * .82) + 
+                                                 (med_price_level[, 1] * withdrawal_amt * .18))
+                           + monthly_annuity_payout) * equity_gross[, 1]
   
   # Remaining periods
   for (t in 2:T) {
-    portfolio_value[, t] <- (portfolio_value[, t-1] - price_level[, t]*withdrawal_amt) * equity_gross[, t]
-    portfolio_value[, t] <- pmax(portfolio_value[, t], 0)
+    portfolio_value[, t] <- (portfolio_value[, t-1] - ((price_level[, t] * withdrawal_amt * .82) + 
+                                                         (med_price_level[, t] * withdrawal_amt * .18))
+                             + monthly_annuity_payout) * equity_gross[, t]
   }
   
-  # Mortality
-
+  # Never allow negative values
+  portfolio_value <- pmax(portfolio_value, 0)
   
+  # First month portfolio hits 0
   failure_month_vec <- apply(portfolio_value, 1, function(x) {
-    month <- which(x == 0)[1] # get 1st value where portfolio hits 0
-    if (is.na(month)) NA else month  # handle portfolios that never hit 0
+    m <- which(x == 0)[1]
+    if (is.na(m)) NA else m
   })
   
+  # Death month (relative to retirement at 60)
+  death_month_vec <- ifelse(death_ages > 60*12, death_ages - 60*12, 0)
   
-  portfolio_df <- as_tibble(portfolio_value) %>%
-    mutate(death_month = ifelse(death_ages > 60*12, death_ages-(61*12), 0), # retirement starts at age 60 (people that die before 60 are automatically "successes")
-           failure_month = failure_month_vec,
-           success = death_month <= failure_month | is.na(failure_month)) %>%  # portfolio is success if death_month is less than failure_month
-    select(death_month:success, everything()) %>%
-    mutate(success_no_death = ifelse(.[[ncol(.)]] > 0, TRUE, FALSE))
+  # Clamp death months to max simulation length
+  death_month_vec <- pmin(death_month_vec, ncol(portfolio_value))
+  death_month_vec[death_month_vec == 0] <- 1  # pre-60 deaths → use first month
   
-  success_rate <- mean(portfolio_df$success)
-  success_rate_no_death <- mean(portfolio_df$success_no_death)
+  # Value at death (vectorized)
+  value_at_death <- portfolio_value[cbind(1:n_sims, death_month_vec)]
   
-  return(list(success = success_rate, success_no_death = success_rate_no_death))
+  # Success indicators
+  success <- (death_month_vec <= failure_month_vec) | is.na(failure_month_vec)
+  success_no_death <- portfolio_value[, ncol(portfolio_value)] > 0
+  
+  # End-of-life expected value ignoring death
+  expected_value_no_death <- mean(portfolio_value[, -1])
+  
+  # Success rates
+  success_rate <- mean(success)
+  success_rate_no_death <- mean(success_no_death)
+  expected_value_at_death <- mean(value_at_death)
+  value_at_death_ci <- quantile(value_at_death, probs = c(.05, .5, .95))
+  value_no_death_ci <- quantile(portfolio_value[, -1], probs = c(.05, .5, .95))
+  
+  return(list(
+    success = success_rate,
+    success_no_death = success_rate_no_death,
+    expected_value_at_death = expected_value_at_death,
+    expected_value_no_death = expected_value_no_death,
+    value_at_death_ci = value_at_death_ci,
+    value_no_death_ci = value_no_death_ci
+  ))
 }
+
 
 
 death_ages <- sample(
@@ -351,36 +386,77 @@ death_ages <- sample(
   prob = mortality_tbl$death_pdf
 )
 
-portfolio_sim(annuity_prop = .4, withdrawal_rate = .08, annuity_prices, equity_sims, cpi_sims, death_ages)
+test <- portfolio_sim_vec(annuity_prop = .4, withdrawal_rate = .08, prices, equity_sims, cpi_sims, med_sims, death_ages)
 
 df <- expand_grid(
   withdrawal_rate = seq(.01, .2, by = .001),
   annuity_prop = seq(0, 1, by = .1)  # Adjust range and step as needed
-) %>%
-  mutate(success_rates = pmap(list(annuity_prop, withdrawal_rate),
-                                 ~portfolio_sim(annuity_prop = ..1, 
-                                                withdrawal_rate = ..2, 
-                                                annuity_prices, 
-                                                equity_sims, 
-                                                cpi_sims,
-                                                death_ages))) %>%
+)
+
+with_progress({
+  
+  p <- progressor(along = 1:nrow(df))
+  
+   df <- df %>%
+    mutate(success_rates = pmap(list(annuity_prop, withdrawal_rate),
+                                ~{
+                                  p()
+                                  portfolio_sim_vec(annuity_prop = ..1, 
+                                               withdrawal_rate = ..2, 
+                                               prices, 
+                                               equity_sims, 
+                                               cpi_sims,
+                                               med_sims,
+                                               death_ages)
+                                  }))
+})
+
+final_df <- df %>%
   mutate(
-    success_rate     = map_dbl(success_rates, 1),  # first element
-    success_no_death = map_dbl(success_rates, 2)   # second element
+    success_rate        = map_dbl(success_rates, "success"),
+    success_no_death    = map_dbl(success_rates, "success_no_death"),
+    mean_value_at_death = map_dbl(success_rates, "expected_value_at_death"),
+    mean_value_no_death = map_dbl(success_rates, "expected_value_no_death"),
+    value_at_death_p05  = map_dbl(success_rates, ~ .x$value_at_death_ci[["5%"]]),
+    value_at_death_p50  = map_dbl(success_rates, ~ .x$value_at_death_ci[["50%"]]),
+    value_at_death_p95  = map_dbl(success_rates, ~ .x$value_at_death_ci[["95%"]]),
+    value_no_death_p05  = map_dbl(success_rates, ~ .x$value_no_death_ci[["5%"]]),
+    value_no_death_p50  = map_dbl(success_rates, ~ .x$value_no_death_ci[["50%"]]),
+    value_no_death_p95  = map_dbl(success_rates, ~ .x$value_no_death_ci[["95%"]])
   )
 
 # heat map of success rates
 
-ggplot(data = df) +
-  geom_tile(aes(x = annuity_prop, y = withdrawal_rate, fill = success_rate))
+ggplot(data = final_df) +
+  geom_tile(aes(x = withdrawal_rate, y = annuity_prop, fill = success_rate))
 
 
-ggplot(data = df) +
-  geom_tile(aes(x = annuity_prop, y = withdrawal_rate, fill = success_no_death))
+ggplot(data = final_df) +
+  geom_tile(aes(x = withdrawal_rate, y = annuity_prop, fill = success_no_death))
 
-ggplot(data = df) +
+ggplot(data = final_df) +
   geom_line(aes(x = withdrawal_rate, y = success_rate, color = factor(annuity_prop)))
 
-ggplot(data = df) +
-  geom_line(aes(x = withdrawal_rate, y = success_no_death, color = factor(annuity_prop)))
+ggplot(data = final_df) +
+  geom_point(aes(x = withdrawal_rate, y = success_no_death, color = factor(annuity_prop)))
+
+ggplot(data = final_df) +
+  geom_point(aes(x = withdrawal_rate, y = mean_value_no_death, color = factor(annuity_prop)))
+
+ggplot(data = final_df) +
+  geom_point(aes(x = withdrawal_rate, y = mean_value_at_death, color = factor(annuity_prop)))
+
+ggplot(data = final_df) +
+  geom_line(aes(x = withdrawal_rate, y = value_no_death_p50, color = factor(annuity_prop))) +
+  labs(title = "Median End Portfolio Value")
+  # geom_line(aes(x = withdrawal_rate, y = value_no_death_p05, color = factor(annuity_prop)), linetype = "dashed") +
+  # geom_line(aes(x = withdrawal_rate, y = value_no_death_p95, color = factor(annuity_prop)), linetype = "dashed")
+
+ggplot(data = final_df) +
+  geom_line(aes(x = withdrawal_rate, y = value_at_death_p50, color = factor(annuity_prop))) +
+  labs(title = "Median Portfolio Value at Death") +
+  geom_line(aes(x = withdrawal_rate, y = value_at_death_p05, color = factor(annuity_prop)), linetype = "dashed") +
+  geom_line(aes(x = withdrawal_rate, y = value_at_death_p95, color = factor(annuity_prop)), linetype = "dashed")
+
+
 

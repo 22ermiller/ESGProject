@@ -76,3 +76,63 @@ $$\Delta w_t = \mu + q_{t-1} + \phi \Delta w_{t-1} + \theta\epsilon_{t-1} + \eps
 $$\epsilon_t \sim N(0, \sigma^2)$$
 
 Also notable, is that $q_{t-1}$ is included as opposed to $q_{t}$. Regressing the lagged value of $q_t$ onto $\Delta w_t$ improved model fit. This choice reflects the economic reality that wages often adjust with a delay to changes in consumer prices. In a practical sense, adjustments to employee compensation react to consumer price changes, but this reaction would not occur in real time. It happens with some delay relative to the consumer price change, leading to lagged CPI measures better explaining variations in ECI then contemporaneous CPI values.
+
+### Interest Rates
+
+The next piece of our ESG is interest rates. Perhaps one of the most crucial pieces of our ESG, interest rates directly affect the price and returns of certain fixed-income assets and indirectly affect the behavior of the prices and returns of other assets, most importantly equity returns. We are interested in modeling interest rates of varying duration to properly price fixed income assets such as annuities. As such, we model the yield curve by breaking it up into 3 components: level, slope, and curvature. These 3 components give us a reasonable representation of the yield curve.
+
+When modeling interest rates, we must account for the fact that, in the United States, they effectively have a zero lower bound. This lower bound introduces skewness into the data, violating the assumption of normally distributed errors in standard time-series models when interest rates get close to 0. To account for this, we use a simplified version of a piece-wise transformation proposed by Begin:
+
+$$
+\tilde{r}_t = \begin{cases}
+r_t & r_t > \overline{r} \\
+\overline{r} - \overline{r}\log(\overline{r}) + \overline{r}log(r_t)  & r_t \le \overline{r}
+\end{cases}
+$$
+
+where $r_t$ is the 3 month rate at time t and $\overline{r}$ is the threshold at which we apply the log transformation. For our modeling we choose to set $\overline{r} = .005$, thus applying the transformation to all interest rates under .5%. 
+
+#### Short-Term
+
+In theory, the level of a yield curve can be decided by any interest rate, but we decide to represent it by the short-term interest rate, specifically the 3-month rate. Per our cascading ESG structure, we also incorporate short term rates in our equity returns model, so a model specifically for short rates will prove beneficial for both the yield curve and the equity returns pieces of our ESG.
+
+Short term interest rates have been found to show conditional heteroskedasticity, that is to say, the variance of these interest rates are not just non-constant, but also can depend on the variance of the values before them. For example, large shocks in the interest rates tend to be followed by periods of high variance. To capture these dynamics we choose to model the variance of the rates as a generalized auto-regressive conditional heteroskedastic process of order 1,1 (or GARCH(1,1)). The mean, like inflation, is modeled as an ARMA(1,1) process and, per our cascading structure, CPI is included as a regressor as $q_t = \log{\frac{\text{CPI}_t}{\text{CPI}_{t-1}}}$. More specifically:
+
+
+$$\tilde{r}_t = \mu + q_{t} + \phi \tilde{r}_{t-1} + \theta\epsilon_{t-1} + \epsilon_t$$
+
+$$\epsilon_t \sim \mathcal{N}(0,\sigma_t^2)$$
+
+$$\sigma_t^2 = \omega + \alpha \epsilon_{t-1}^2 + \beta \sigma_{t-1}^2$$
+
+where $\alpha$ is the reaction (or ARCH) component and $\beta$ is the persistence (or GARCH) component of the variance model. 
+
+#### Yield Curve
+
+We choose to approximate the functional form of the yield curve through its level, slope, and curvature. Any point on the yield curve can then be approximated as a weighted sum of the level, slope, and curvature. We denote interest rates as $\tilde{r}_{i,t}$ where $\tilde{r}_{i,t}$ is the $i$ year interest rate at time $t$ (i.e. $\tilde{r}_{10,1}$ is the 10 year interest rate at time 1). We collect and use data for $i = \{3/12,1,2,3,5,7,10,20,30\}$. 3/12 denotes the 3 month interest rate, and all other interest rates are yearly integer values.
+
+We define the level, slope, and curvature specifically in the following way:
+
+$$\text{Level}: \tilde{r}_{3/12,t}$$
+$$\text{Slope}: \tilde{r}_{30,t} - \tilde{r}_{3/12,t}$$
+$$\text{Curvature}: \tilde{r}_{3/12,t} + \tilde{r}_{30,t} - 2\tilde{r}_{10,t} $$
+
+As described above, we model the level as a GARCH process. We choose to model slope and curvature as a 2-dimensional vector auto-regressive (VAR) process of order 1 as follows:
+
+$$\mathbf{F}_t = \mathbf{\mu} + \mathbf{A}\mathbf{F}_{t-1} + \mathbf{b}\tilde{r}_{3/12,t} + \mathbf{\epsilon}_t$$
+$$\mathbf{\epsilon}_t \sim N_2(\mathbf{0}, \mathbf{\Sigma})$$
+Where $\mathbf{F}_t$ is a $2\times1$ vector of slope and curvature at time $t$, $\mathbf{A}$ is a $2\times2$ matrix of auto-regressive components, $\mathbf{b}$ is a $2\times1$ vector of coefficients capturing the influence of the short-term rate at time $t$ on each component, and $\mathbf{\Sigma}$ is the $2\times2$ variance-covariance matrix. We include the 3-month rate as a regressor to capture the dependence of slope and curvature on the overall level of the yield curve. Empirically, including this term also improves the fit of the VAR model.
+
+We then model each interest rate as a linear function of level, slope, and curvature as follows:
+
+$$\mathbf{\tilde{r}}_{i} = \mathbf{X}\mathbf{\beta}_i + \mathbf{\epsilon}_{i}, \quad i = \{1,2,3,5,7,20\}$$
+$$\mathbf{\epsilon}_i \sim N_n(0, \sigma^2_i\mathbf{I})$$
+$\mathbf{X}$ being an $n\times3$ matrix of level, slope, and curvature, and $\mathbf{\beta}_i$ being a $3\times1$ vector of the weightings for interest rate $i$. Noticeably, we exclude the 3 month, 10 year, and 30 year rates from this step because these rates are direct functions of level, slope, and curvature as described above. 
+
+In combination, the GARCH-level model, VAR for slope and curvature, and linear regressions for each interest rate provide a complete framework to approximate the yield curve across all maturities.
+
+### Equity Returns
+
+
+
+
