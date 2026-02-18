@@ -268,9 +268,55 @@ According to: https://www.urban.org/sites/default/files/publication/51766/411130
 implemented 18% of expenses to medical costs and success rates barely shifted lower (medical inflation tends to be a little higher than CPI)
 created table of coefficients for the yield curve model
 
+Ideas: risk of insurance insolvency
+different mortality rates for the "types of people" who would have access to financial products
 
+Notes:
+Applying ECI to simulations (ECI tends to outpace CPI)
+Not sure if I completely trust the ECI simulations
+Annuity pricing:
+- 2 knobs: buying an annuity in the future, age of annuity purchase
+- 80 years in future
+- ability to purchase between 50 and 80?
 
+Meeting Notes:
+linear interpolation between quarters (ECI)
+look into how ECI model changes when using different "start date" for data
 
+Meeting Notes:
+model annual wage inflation
+
+Notes:
+how to include bond investments?
+what kind of metric could be evaluated including wages?
+
+Meeting Notes:
+function in terms of savings rate
+look into changing time until retirement
+
+Meeting Notes:
+explore how savings rate changes through simulation
+simulate with a fixed savings rate
+
+Meeting Notes:
+plotting mean value at death against age at death should all be the same up to 60,then at 60 100% should be 0, 
+then 0% annuity should stay where mean is
+
+Notes:
+Issue was I wasn't subtracting the annuity purchase price from the nest egg
+Question: Would it be correct to add a single annuity payout to a portfolio in the same period that the annuity is purchased?
+Idea: in the savings rate function, there's variation among withdrawal rates
+
+Meeting Notes:
+OG simulation: run for annuity proportion .9-1 by .01, and/or extend out withdrawal rate
+
+Meeting Notes:
+find numbers for how medical expenses change over time through retirement
+how do we model medical expenses? look through literature
+
+Meeting Notes:
+look at how medical expenses spending changes through retirement
+think about creating some randomness to medical expenses (normal distribution)
 
 
 

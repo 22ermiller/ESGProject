@@ -23,6 +23,24 @@ However, both of these approaches are deterministic and, by nature, ignore the u
 
 The rest of the paper is organized as follows: Section 2 introduces the overall structure of the proposed ESG, and explains each piece of the ensemble model of the economy.
 
+## Literature Review
+
+#### (list of sources I'm rounding up and their main ideas) {.unnumbered}
+
+1.  Financial Planning/Portfolio Construction
+
+Pang and Warshawsky use a Vector Autogressive Model to model jointly equity, bond, and cash returns, and search for "good wealth distribution strategies in retirement" using stochastic draws from this model.
+
+Collins et al. show that having an oversimplistic inflation model can lead to drastically different retirement income risk results. Just using different (but plausible) deterministic inflation measures yields retirement portfolio success metrics ranging from 27% to 57%, per their success criteria. They also explore different asset returns models by modeling jointly a two-asset class portfolio under regime-switching dynamics and show that sustainability rates change drastically when paths of economic variables driven by stochastic models are used in portfolio simulation.
+
+2.  How much to Annuitize
+
+Yaari (1965) explains that if a consumer has no motive to leave a bequest after death, they should invest all of their assets in annuities. 
+
+Optimal Asset Allocation towards the End of the Life Cycle: To Annuitize or Not to Annuitize? (Milevsky)
+
+3.  ESGs
+
 ## Economic Scenario Generator
 
 Many different ESG structures have been proposed in the financial literature. Our approach borrows heavily from existing models for the individual components, and while it does not introduce novel modeling techniques, it is uniquely structured to address the specific financial planning questions we aim to answer. In our ESG, we model inflation, interest rates, equity returns, fixed-income returns, and mortality rates. To account for dependencies between these variables, we adopt a cascade-style structure. This structure is illustrated in Figure 1 below.
@@ -79,7 +97,7 @@ Also notable, is that $q_{t-1}$ is included as opposed to $q_{t}$. Regressing th
 
 ### Interest Rates
 
-The next piece of our ESG is interest rates. Perhaps one of the most crucial pieces of our ESG, interest rates directly affect the price and returns of certain fixed-income assets and indirectly affect the behavior of the prices and returns of other assets, most importantly equity returns. We are interested in modeling interest rates of varying duration to properly price fixed income assets such as annuities. As such, we model the yield curve by breaking it up into 3 components: level, slope, and curvature. These 3 components give us a reasonable representation of the yield curve.
+The next piece of our ESG is interest rates. Perhaps one of the most crucial pieces of our ESG, interest rates directly affect the price and returns of certain fixed-income assets and indirectly affect the behavior of the prices and returns of other assets, most importantly equity returns. We are interested in modeling interest rates of varying duration to properly price fixed income assets such as annuities. As such, we model the yield curve by breaking it up into 3 components: level, slope, and curvature. It has been found that these 3 factors account for about 99% of the variation in the yield curve (Litterman and Scheinkman, 1991). These 3 components give us a reasonable representation of the yield curve.
 
 When modeling interest rates, we must account for the fact that, in the United States, they effectively have a zero lower bound. This lower bound introduces skewness into the data, violating the assumption of normally distributed errors in standard time-series models when interest rates get close to 0. To account for this, we use a simplified version of a piece-wise transformation proposed by Begin:
 
@@ -90,14 +108,13 @@ r_t & r_t > \overline{r} \\
 \end{cases}
 $$
 
-where $r_t$ is the 3 month rate at time t and $\overline{r}$ is the threshold at which we apply the log transformation. For our modeling we choose to set $\overline{r} = .005$, thus applying the transformation to all interest rates under .5%. 
+where $r_t$ is the 3 month rate at time t and $\overline{r}$ is the threshold at which we apply the log transformation. For our modeling we choose to set $\overline{r} = .005$, thus applying the transformation to all interest rates under .5%.
 
 #### Short-Term
 
 In theory, the level of a yield curve can be decided by any interest rate, but we decide to represent it by the short-term interest rate, specifically the 3-month rate. Per our cascading ESG structure, we also incorporate short term rates in our equity returns model, so a model specifically for short rates will prove beneficial for both the yield curve and the equity returns pieces of our ESG.
 
-Short term interest rates have been found to show conditional heteroskedasticity, that is to say, the variance of these interest rates are not just non-constant, but also can depend on the variance of the values before them. For example, large shocks in the interest rates tend to be followed by periods of high variance. To capture these dynamics we choose to model the variance of the rates as a generalized auto-regressive conditional heteroskedastic process of order 1,1 (or GARCH(1,1)). The mean, like inflation, is modeled as an ARMA(1,1) process and, per our cascading structure, CPI is included as a regressor as $q_t = \log{\frac{\text{CPI}_t}{\text{CPI}_{t-1}}}$. More specifically:
-
+Short term interest rates have been found to exhibit conditional heteroskedasticity, that is to say, the variance of these interest rates are not just non-constant, but also can depend on the variance of the values before them. For example, large shocks in the interest rates tend to be followed by periods of high variance. To capture these dynamics we choose to model the variance of the rates as a generalized auto-regressive conditional heteroskedastic process of order 1,1 (or GARCH(1,1)). The mean, like inflation, is modeled as an ARMA(1,1) process and, per our cascading structure, CPI is included as a regressor as $q_t = \log{\frac{\text{CPI}_t}{\text{CPI}_{t-1}}}$. More specifically:
 
 $$\tilde{r}_t = \mu + q_{t} + \phi \tilde{r}_{t-1} + \theta\epsilon_{t-1} + \epsilon_t$$
 
@@ -105,7 +122,7 @@ $$\epsilon_t \sim \mathcal{N}(0,\sigma_t^2)$$
 
 $$\sigma_t^2 = \omega + \alpha \epsilon_{t-1}^2 + \beta \sigma_{t-1}^2$$
 
-where $\alpha$ is the reaction (or ARCH) component and $\beta$ is the persistence (or GARCH) component of the variance model. 
+where $\alpha$ is the reaction (or ARCH) component and $\beta$ is the persistence (or GARCH) component of the variance model.
 
 #### Yield Curve
 
@@ -113,26 +130,44 @@ We choose to approximate the functional form of the yield curve through its leve
 
 We define the level, slope, and curvature specifically in the following way:
 
-$$\text{Level}: \tilde{r}_{3/12,t}$$
-$$\text{Slope}: \tilde{r}_{30,t} - \tilde{r}_{3/12,t}$$
-$$\text{Curvature}: \tilde{r}_{3/12,t} + \tilde{r}_{30,t} - 2\tilde{r}_{10,t} $$
+$$\text{Level}: \tilde{r}_{3/12,t}$$ $$\text{Slope}: \tilde{r}_{30,t} - \tilde{r}_{3/12,t}$$ $$\text{Curvature}: \tilde{r}_{3/12,t} + \tilde{r}_{30,t} - 2\tilde{r}_{10,t} $$
 
 As described above, we model the level as a GARCH process. We choose to model slope and curvature as a 2-dimensional vector auto-regressive (VAR) process of order 1 as follows:
 
-$$\mathbf{F}_t = \mathbf{\mu} + \mathbf{A}\mathbf{F}_{t-1} + \mathbf{b}\tilde{r}_{3/12,t} + \mathbf{\epsilon}_t$$
-$$\mathbf{\epsilon}_t \sim N_2(\mathbf{0}, \mathbf{\Sigma})$$
-Where $\mathbf{F}_t$ is a $2\times1$ vector of slope and curvature at time $t$, $\mathbf{A}$ is a $2\times2$ matrix of auto-regressive components, $\mathbf{b}$ is a $2\times1$ vector of coefficients capturing the influence of the short-term rate at time $t$ on each component, and $\mathbf{\Sigma}$ is the $2\times2$ variance-covariance matrix. We include the 3-month rate as a regressor to capture the dependence of slope and curvature on the overall level of the yield curve. Empirically, including this term also improves the fit of the VAR model.
+$$\mathbf{F}_t = \mathbf{\mu} + \mathbf{A}\mathbf{F}_{t-1} + \mathbf{b}\tilde{r}_{3/12,t} + \mathbf{\epsilon}_t$$ $$\mathbf{\epsilon}_t \sim N_2(\mathbf{0}, \mathbf{\Sigma})$$ Where $\mathbf{F}_t$ is a $2\times1$ vector of slope and curvature at time $t$, $\mathbf{A}$ is a $2\times2$ matrix of auto-regressive components, $\mathbf{b}$ is a $2\times1$ vector of coefficients capturing the influence of the short-term rate at time $t$ on each component, and $\mathbf{\Sigma}$ is the $2\times2$ variance-covariance matrix. We include the 3-month rate as a regressor to capture the dependence of slope and curvature on the overall level of the yield curve. Empirically, including this term also improves the fit of the VAR model.
 
 We then model each interest rate as a linear function of level, slope, and curvature as follows:
 
-$$\mathbf{\tilde{r}}_{i} = \mathbf{X}\mathbf{\beta}_i + \mathbf{\epsilon}_{i}, \quad i = \{1,2,3,5,7,20\}$$
-$$\mathbf{\epsilon}_i \sim N_n(0, \sigma^2_i\mathbf{I})$$
-$\mathbf{X}$ being an $n\times3$ matrix of level, slope, and curvature, and $\mathbf{\beta}_i$ being a $3\times1$ vector of the weightings for interest rate $i$. Noticeably, we exclude the 3 month, 10 year, and 30 year rates from this step because these rates are direct functions of level, slope, and curvature as described above. 
+$$\mathbf{\tilde{r}}_{i} = \mathbf{X}\mathbf{\beta}_i + \mathbf{\epsilon}_{i}, \quad i = \{1,2,3,5,7,20\}$$ $$\mathbf{\epsilon}_i \sim N_n(0, \sigma^2_i\mathbf{I})$$ $\mathbf{X}$ being an $n\times3$ matrix of level, slope, and curvature, and $\mathbf{\beta}_i$ being a $3\times1$ vector of the weightings for interest rate $i$. Noticeably, we exclude the 3 month, 10 year, and 30 year rates from this step because these rates are direct functions of level, slope, and curvature as described above.
 
-In combination, the GARCH-level model, VAR for slope and curvature, and linear regressions for each interest rate provide a complete framework to approximate the yield curve across all maturities.
+In combination, the GARCH model for level, VAR model for slope and curvature, and linear regressions for each interest rate provide a complete framework to approximate the yield curve across all maturities.
 
 ### Equity Returns
 
+Equity returns is the last piece of our proposed ESG. Along with GARCH models, regime-switching models are commonly used to model equity returns. Regime-switching, otherwise known as Markov-switching models, assume that a series belongs to $N$ regimes that are either observed or unobserved. In the case of 2 regimes, from time $t$ to time $t+1$ there is some probability that the regime stays the same, or switches to the other regime. The parameters of interest change depending on the regime the random variable is assigned to.
 
+In our case, we assume that the regimes underlying equity returns are unobserved. Because they are unobserved we must determine the number of regimes to estimate and then estimate the underlying regimes the observations belong to. Existing literature has suggested that a 2 regime model provides the best, parsimonious fit for equity returns (Hardy 2001). So we will assume there are 2 underlying regimes in the series. 
 
+Similar to inflation, we model the log ratio of returns: $y_t = log(\frac{S_t}{S_{t-1}})$, where $S_t$ is the total returns at time $t$. We model the mean of $y_t$ without regime-switching dynamics and model the variance of $y_t$ as a regime switching GARCH process as follows:
 
+$$y_t = \mu + q_t\gamma_1 +  r_{3/12,t}\gamma_2 + \epsilon_t$$
+
+$$\epsilon_t \sim \mathcal{N}(0,\sigma_{t}^2)$$
+
+$$\sigma_{t}^2 = \omega_R_t + \alpha_R_t \epsilon_{t-1}^2 + \beta_R_t \sigma_{t-1}^2$$
+
+Where $R_t$ is the regime at time $t$. The model for $\sigma^2$ therefore has 6 fitted parameters ($\omega_1, \omega_2, \alpha_1, \alpha_2, \beta_1, \beta_2$). Per the ESG cascading structure, inflation ($q_t$), and the 3 month-return ($r_{3/12,t}$) are both included as predictors in the mean model of $y_t$.
+
+## References
+
+  Collins, P. J., Lam, H., and Stampfli, J. (2015), "How risky is your retirement income risk model?," *Financial Services Review,* 24, 193-216,
+  
+  Hardy, M. R., (2001). "A Regime-Switching Model of Long-Term Stock Returns," *North American Actuarial Journal,* 5(2), 41-53, doi.org/10.1080/10920277.2001.10595984
+  
+  Litterman, R. and Scheinkman, J. (1991), "Common Factors Affecting Bond Returns," *The Journal of Fixed Income,* 1(1), 54-61, doi:10.3905/jfi.1991.692347
+  
+  Milevsky, M. A. (1998), "Optimal Asset Allocation towards the End of the Life Cycle: To Annuitize or Not to Annuitize? The Journal of Risk and Insurance", 65(3), 401–426, https://doi.org/10.2307/253657
+  
+  Pang, G. and Warshawsky, M. (2009), "Comparing Strategies for Retirement Wealth Management: Mutual Funds and Annuities," *Journal of Financial Planning*, 22, 36-47
+  
+  Pang, G. and Warshawsky, M. (2010), "Good Strategies for Wealth Distribution in Retirement," https://ssrn.com/abstract=1623308

@@ -11,7 +11,7 @@ library(timetk)
 cpi_raw <- read_csv("data/cpi.csv")
 
 cpi_df <- read_csv("data/cpi.csv") |> 
-  filter(date >= "2010-01-01") |> 
+  filter(date >= "1990-01-01") |> 
   mutate(lagged_cpi = lag(cpi, n = 1)) |> 
   mutate(log_dif_cpi = log(cpi) - log(lagged_cpi)) |> 
   filter(!is.na(log_dif_cpi)) # remove first observation without lag
@@ -153,11 +153,102 @@ quarterly_cpi <- cpi_df |>
          lagged_cpi = lag(log_dif_cpi, n = 1)) |> 
   filter(!is.na(log_dif_cpi) & !is.na(lagged_cpi)) # remove first observation without lag
 
+
 eci_df <- read_csv("data/eci.csv") |> 
   filter(date >= min(quarterly_cpi$date)-months(3)) |> # only need data that cpi has
   mutate(lagged_eci = lag(eci, n = 1)) |> 
   mutate(log_dif_eci = log(eci) - log(lagged_eci)) |> 
   filter(!is.na(log_dif_eci)) # remove first observation without lag
+
+
+
+
+# Yearly ECI --------------------------------------------------------------
+
+yearly_eci_df <- read_csv("data/eci.csv") |> 
+  filter(date >= min(yearly_cpi$date)-years(1)) |> # only need data that cpi has
+  filter(month(date) == 3) |>
+  mutate(lagged_eci = lag(eci, n = 1)) |> 
+  mutate(log_dif_eci = log(eci) - log(lagged_eci)) |> 
+  filter(!is.na(log_dif_eci)) # remove first observation without lag
+
+yearly_cpi <- cpi_df |> 
+  filter(month(date) == 3) |>
+  mutate(lagged_cpi = lag(cpi, n = 1)) |> 
+  mutate(log_dif_cpi = log(cpi) - log(lagged_cpi),
+         lagged_cpi = lag(log_dif_cpi, n = 1)) |> 
+  filter(!is.na(log_dif_cpi) & !is.na(lagged_cpi)) # remove first observation without lag
+
+# explore correlation
+
+# Correlation between ECI and CPI
+cor(yearly_eci_df$log_dif_eci, yearly_cpi$log_dif_cpi)
+# find correlation between ECI and CPI lagged by 1
+cor(yearly_eci_df$log_dif_eci, yearly_cpi$lagged_cpi, use = "complete.obs")
+
+yearly_eci_ts <- ts(yearly_eci_df$log_dif_eci, start = c(min(year(yearly_eci_df$date))), frequency = 1)
+yearly_cpi_ts <- ts(yearly_cpi$log_dif_cpi, start = c(min(year(yearly_eci_df$date))), frequency = 1)
+
+
+yearly_full_arma <- Arima(yearly_eci_ts, order = c(1, 0, 1), xreg=yearly_cpi_ts)
+yearly_full_ar <- Arima(yearly_eci_ts, order = c(1, 0, 0), xreg=yearly_cpi_ts)
+yearly_arma <-  Arima(yearly_eci_ts, order = c(1, 0, 1))
+
+AIC(yearly_full_arma)
+AIC(yearly_full_ar)
+AIC(yearly_arma)
+
+BIC(yearly_full_arma)
+BIC(yearly_full_ar)
+BIC(yearly_arma)
+
+# plot simulations
+
+n_sims <- 1000
+sim_length <- 100
+ar1_sims <- matrix(NA, nrow = n_sims, ncol = sim_length)
+arma_sims <- matrix(NA, nrow = n_sims, ncol = sim_length)
+
+for(i in 1:n_sims){
+  log_dif_cpi_sim <- simulate(cpi_arima_model, nsim = sim_length*12)
+  
+  # make simulations yearly
+  yearly_cpi_sim_df <- data.frame(
+    date = zoo::as.Date(time(log_dif_cpi_sim)),
+    value = log_dif_cpi_sim) |> 
+    mutate(year = year(date)) |> 
+    group_by(year) |> 
+    summarize(date = min(date),
+              log_dif_cpi = sum(value))
+  
+  yearly_cpi_sim <- yearly_cpi_sim_df$log_dif_cpi[1:sim_length]
+  
+  ar1_sims[i,] <- simulate(yearly_full_ar, nsim = sim_length, xreg = yearly_cpi_sim)
+  arma_sims[i,] <- simulate(yearly_full_arma, nsim = sim_length, xreg = yearly_cpi_sim)
+}
+
+# remove first column of each simulation
+ar1_sims <- ar1_sims[,-1]
+arma_sims <- arma_sims[,-1]
+
+# get average simulation
+ar1_avg <- colMeans(ar1_sims)
+arma_avg <- colMeans(arma_sims)
+# get 95% intervals
+ar1_ci <- apply(ar1_sims, 2, quantile, probs = c(.025, .975))
+arma_ci <- apply(arma_sims, 2, quantile, probs = c(.025, .975))
+
+# plot simulation
+plot(ar1_avg, type = "l", col = "red", ylim = c(-.008, .08)
+     )
+lines(ar1_ci[2,], col = "red", lty = 2)
+lines(ar1_ci[1,], col = "red", lty = 2)
+lines(arma_avg, col = "blue")
+lines(arma_ci[2,], col = "blue", lty = 2)
+lines(arma_ci[1,], col = "blue", lty = 2)
+abline(h = .01, col = "black")
+legend("bottomleft", legend = c("ARIMA(1,0,0)", "ARIMA(1,0,1)"), col = c("red", "blue"), lty = 1)
+
 
 ## Explore relationship between ECI and CPI
 
@@ -189,7 +280,6 @@ resid_arima <- Arima(resid_ts, order = c(1, 1, 1))
 summary(resid_arima)
 
 # Fit ARIMA(1,0,1) model
-arima_model <- Arima(log_dif_eci_ts, order = c(1, 0, 1))
 # add in cpi as covariate
 full_arima_model <- Arima(log_dif_eci_ts, order = c(1, 1, 1), xreg=xreg_matrix)
 full_seasonal_arima_model <- Arima(log_dif_eci_ts, order = c(0,0,0), 
@@ -197,6 +287,7 @@ full_seasonal_arima_model <- Arima(log_dif_eci_ts, order = c(0,0,0),
                                    xreg=xreg_matrix)
 arima_model_wcpi <- Arima(log_dif_eci_ts, order = c(1, 0, 1), xreg = xreg_matrix[,1])
 arima_model_wlagcpi <- Arima(log_dif_eci_ts, order = c(1, 1, 1), xreg = xreg_matrix[,2])
+arima_model <- Arima(log_dif_eci_ts, order = c(1, 0, 1), xreg = xreg_matrix[,2])
 
 
 # Summary of the model
@@ -233,7 +324,7 @@ for(i in 1:n_sims){
   
   lagged_cpi_sim <- c(tail(quarterly_cpi$log_dif_cpi, n = 1), head(as.vector(log_dif_cpi_sim), n = -1))
   xreg_matrix_sim <- cbind(log_dif_cpi_sim, lagged_cpi_sim)
-  ar101_sims[i,] <- simulate(arima_model, nsim = sim_length)
+  ar101_sims[i,] <- simulate(arima_model, nsim = sim_length, xreg = xreg_matrix_sim[,2])
   full_model_sims[i,] <- simulate(arima_model_wlagcpi, nsim = sim_length, xreg = xreg_matrix_sim[,2])
 }
 

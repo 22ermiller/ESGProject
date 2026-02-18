@@ -6,7 +6,7 @@ library(tidyverse)
 cpi_df_raw <- read_csv("data/cpi.csv") 
 
 cpi_df <- cpi_df_raw |> 
-  filter(date >= "1990-01-01") |> # only dates from 2010 onwards
+  filter(date >= "1990-01-01") |> # only dates from 1990 onwards
   mutate(lagged_cpi = lag(cpi, n = 1)) |> 
   mutate(log_dif_cpi = log(cpi) - log(lagged_cpi)) |> 
   filter(!is.na(log_dif_cpi))

@@ -132,6 +132,80 @@ plot(quarterly_cpi_sim_df$log_dif_cpi, eci_sim)
 plot(lagged_cpi_sim, eci_sim)
 
 
+
+
+# Yearly ECI --------------------------------------------------------------
+
+yearly_eci_df <- read_csv("data/eci.csv") |> 
+  filter(date >= min(yearly_cpi$date)-years(1)) |> # only need data that cpi has
+  filter(month(date) == 3) |>
+  mutate(lagged_eci = lag(eci, n = 1)) |> 
+  mutate(log_dif_eci = log(eci) - log(lagged_eci)) |> 
+  filter(!is.na(log_dif_eci)) # remove first observation without lag
+
+yearly_cpi <- cpi_df |> 
+  filter(month(date) == 3) |>
+  mutate(lagged_cpi = lag(cpi, n = 1)) |> 
+  mutate(log_dif_cpi = log(cpi) - log(lagged_cpi),
+         lagged_cpi = lag(log_dif_cpi, n = 1)) |> 
+  filter(!is.na(log_dif_cpi) & !is.na(lagged_cpi)) # remove first observation without lag
+
+
+# Correlation between ECI and CPI
+cor(yearly_eci_df$log_dif_eci, yearly_cpi$log_dif_cpi)
+# find correlation between ECI and CPI lagged by 1
+cor(yearly_eci_df$log_dif_eci, yearly_cpi$lagged_cpi, use = "complete.obs")
+
+
+yearly_eci_ts <- ts(yearly_eci_df$log_dif_eci, start = c(min(year(yearly_eci_df$date))), frequency = 1)
+yearly_cpi_ts <- ts(yearly_cpi$log_dif_cpi, start = c(min(year(yearly_eci_df$date))), frequency = 1)
+
+
+yearly_full_ar <- Arima(yearly_eci_ts, order = c(1, 0, 0), xreg=yearly_cpi_ts)
+
+saveRDS(yearly_full_ar, "models/eci_mod.rds")
+
+# plot simulations
+
+n_sims <- 1000
+sim_length <- 100
+ar1_sims <- matrix(NA, nrow = n_sims, ncol = sim_length)
+arma_sims <- matrix(NA, nrow = n_sims, ncol = sim_length)
+
+for(i in 1:n_sims){
+  log_dif_cpi_sim <- simulate(cpi_arima_model, nsim = sim_length*12)
+  
+  # make simulations yearly
+  yearly_cpi_sim_df <- data.frame(
+    date = zoo::as.Date(time(log_dif_cpi_sim)),
+    value = log_dif_cpi_sim) |> 
+    mutate(year = year(date)) |> 
+    group_by(year) |> 
+    summarize(date = min(date),
+              log_dif_cpi = sum(value))
+  
+  yearly_cpi_sim <- yearly_cpi_sim_df$log_dif_cpi[1:sim_length]
+  
+  ar1_sims[i,] <- simulate(yearly_full_ar, nsim = sim_length, xreg = yearly_cpi_sim)
+}
+
+# remove first column of each simulation
+ar1_sims <- ar1_sims[,-1]
+
+# get average simulation
+ar1_avg <- colMeans(ar1_sims)
+# get 95% intervals
+ar1_ci <- apply(ar1_sims, 2, quantile, probs = c(.025, .975))
+
+# plot simulation
+plot(ar1_avg, type = "l", col = "red", ylim = c(-.008, .08)
+)
+lines(ar1_ci[2,], col = "red", lty = 2)
+lines(ar1_ci[1,], col = "red", lty = 2)
+abline(h = mean(yearly_eci_ts), col = "black")
+
+
+
 # Medical Inflation -------------------------------------------------------
 
 med_df <- read_csv("data/med_inflation.csv") |> 
