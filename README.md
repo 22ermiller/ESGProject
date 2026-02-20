@@ -2,7 +2,9 @@
 
 This repository contains all the code and documents relating to my BYU master's project. The goal of the project was to analyze the risk associated with retirement plans under a stochastic framework via an Economic Scenario Generator (ESG).
 
-![ESG Structure](documents/www/ESG_diagram.png)
+<p align="center">
+  <img src="images/esg_flowchart.png" width="70%">
+</p>
 
 ## Important Files and Structure
 
