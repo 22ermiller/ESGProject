@@ -16,6 +16,10 @@ This script implements all pieces of the ESG and applies simulated draws to hypo
 
 These are saved fitted model objects that make up the ESG
 
+### /raw_data /data /data_cleaning
+
+These folders contain all files and scripts related to the data used to fit the ESG. Interest rate and inflation data was obtained from the Federal Reserve Bank of St. Louis Website (https://fred.stlouisfed.org/) and Stock Market data was obtained from the `tidyfinance` package
+
 ### functions.R
 
 This file contains all the functions necessary to extract simulated draws from the ESG
