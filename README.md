@@ -4,10 +4,13 @@ This repository contains all the code and documents relating to my BYU master's 
 
 ## Important Files and Structure
 
-### 01-10.R Files
+### Model Development Scripts (01-08)
 
 These files contain all the exploratory work done to create the final models implemented in the ESG
-- 09_ESG.R implements all pieces of the ESG and applies simulated draws to hypothetical retirement plans consisting of variable annuitization and spending rates.
+
+### 09_ESG.R
+
+This script implements all pieces of the ESG and applies simulated draws to hypothetical retirement plans consisting of variable annuitization and spending rates.
 
 ### /models
 
