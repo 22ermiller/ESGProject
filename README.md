@@ -1,6 +1,6 @@
 # Analyzing Retirement Plans with an ESG
 
-This repository contains all the code and documents relating to my BYU master's project. The goal of the project was to analyze the risk associated with retirement plans under a stochastic framework via an Economic Scenario Generator (ESG).
+This repository contains all the code and documents relating to my BYU master's project. The goal of the project was to analyze the risk associated with retirement plans under a stochastic framework via a cascade-style Economic Scenario Generator (ESG).
 
 <p align="center">
   <img src="documents/www/ESG_diagram.png" width="50%">
