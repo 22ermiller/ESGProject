@@ -32,4 +32,4 @@ This file contains all the functions necessary to extract simulated draws from t
 
 Contains important documents/presentation files related to the presentation of the project.
  - ESGPaper.pdf is the final paper describing the project
- - SRC_Presentation-pdf.pdf is the presentation file used for project defense
+ - DefensePresentation.pdf is the presentation file used for project defense
