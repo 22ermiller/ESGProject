@@ -225,8 +225,13 @@ plot_yield_curve <- function(var_sim, models) {
   #plot(yield_curve_df$time, yield_curve_df$rate)
   ggplot(data = yield_curve_df) +
     geom_point(aes(x = time, y = rate)) +
-    #geom_smooth(aes(x = time, y = rate), se = FALSE) +
-    labs(subtitle = paste0("Slope: ", sample_slope, ". Curve: ", sample_curve))
+    geom_smooth(aes(x = time, y = rate), se = FALSE) +
+    labs(subtitle = paste0("Slope: ", round(sample_slope, 2), ". Curve: ", round(sample_curve,2)),
+         title = "Sample Yield Curve",
+         y = "Rate",
+         x = "Time To Maturity") +
+    scale_y_continuous(labels = scales::percent) +
+    theme_minimal(base_size = 12)
   
 }
 

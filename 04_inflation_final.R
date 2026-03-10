@@ -198,7 +198,10 @@ ar1_avg <- colMeans(ar1_sims)
 ar1_ci <- apply(ar1_sims, 2, quantile, probs = c(.025, .975))
 
 # plot simulation
-plot(ar1_avg, type = "l", col = "red", ylim = c(-.008, .08)
+plot(ar1_avg, type = "l", col = "red", ylim = c(-.008, .08),
+     xlab = "Year",
+     ylab = "Log Difference ECI",
+     main = "Yearly ECI Draws AR(1) w/ CPI as Predictor"
 )
 lines(ar1_ci[2,], col = "red", lty = 2)
 lines(ar1_ci[1,], col = "red", lty = 2)

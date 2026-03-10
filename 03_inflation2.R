@@ -239,7 +239,8 @@ ar1_ci <- apply(ar1_sims, 2, quantile, probs = c(.025, .975))
 arma_ci <- apply(arma_sims, 2, quantile, probs = c(.025, .975))
 
 # plot simulation
-plot(ar1_avg, type = "l", col = "red", ylim = c(-.008, .08)
+plot(ar1_avg, type = "l", col = "red", ylim = c(-.008, .08), xlab = "Time", ylab = "Log-Dif ECI",
+     main = "Simulated Draws for Different Models"
      )
 lines(ar1_ci[2,], col = "red", lty = 2)
 lines(ar1_ci[1,], col = "red", lty = 2)
@@ -247,7 +248,7 @@ lines(arma_avg, col = "blue")
 lines(arma_ci[2,], col = "blue", lty = 2)
 lines(arma_ci[1,], col = "blue", lty = 2)
 abline(h = .01, col = "black")
-legend("bottomleft", legend = c("ARIMA(1,0,0)", "ARIMA(1,0,1)"), col = c("red", "blue"), lty = 1)
+legend("bottomleft", legend = c("ARIMA(1,0)", "ARIMA(1,0,1)"), col = c("red", "blue"), lty = 1)
 
 
 ## Explore relationship between ECI and CPI
@@ -257,7 +258,9 @@ cor(eci_df$log_dif_eci, quarterly_cpi$log_dif_cpi)
 # find correlation between ECI and CPI lagged by 1
 cor(eci_df$log_dif_eci, quarterly_cpi$lagged_cpi, use = "complete.obs")
 
-plot(eci_df$log_dif_eci, type = "l")
+plot(eci_df$log_dif_eci, type = "l", xlab = "Quarter", ylab = "Log Difference ECI", main = "Quarterly ECI Time-Series")
+plot(yearly_eci_df$log_dif_eci, type = "l", xlab = "Quarter", ylab = "Log Difference ECI", main = "Quarterly ECI Time-Series")
+
 plot(quarterly_cpi$log_dif_cpi, type = "l")
 plot(eci_df$log_dif_eci, quarterly_cpi$log_dif_cpi)
 plot(eci_df$log_dif_eci, quarterly_cpi$lagged_cpi)
@@ -340,7 +343,8 @@ ar101_ci <- apply(ar101_sims, 2, quantile, probs = c(.025, .975))
 full_model_ci <- apply(full_model_sims, 2, quantile, probs = c(.025, .975))
 
 # plot simulation
-plot(ar101_avg, type = "l", col = "red", ylim = c(-.008, .02))
+plot(ar101_avg, type = "l", col = "red", ylim = c(-.008, .02), xlab = "Time", ylab = "Log-Dif ECI",
+     main = "Simulated Draws for Different Models")
 lines(ar101_ci[2,], col = "red", lty = 2)
 lines(ar101_ci[1,], col = "red", lty = 2)
 lines(full_model_avg, col = "blue")
