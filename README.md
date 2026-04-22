@@ -44,7 +44,7 @@ Contains important documents/presentation files related to the presentation of t
 
 ## Updating the ESG
 
-Steps to be taken to update ESG and models with up-to-date data
+Steps to be taken to update ESG and models with up-to-date data:
 
 1.  Read in New Data Files
     -   Put new inflation and interest rate raw files in /raw_data
