@@ -1,3 +1,12 @@
+## Equity Returns Modeling ##
+## Iterate through AR models, GARCH model, and RSGARCH Model
+## FINAL MODEL: RSGARCH Model with 2 pieces, (1) Mean model fit with lm, (2) Variance Model fit with MSGARCH package
+## Because the fitted MSGARCH object cannot be saved, the mean model, and the residuals from the 
+##    mean model are the saved items that are used downstream. In the ESG function the MSGARCH model is refit every
+##    time using the mean model residuals
+## Plots to Show Simulated Draws Also Are Made
+
+
 library(tidyverse)
 library(tidyquant)
 library(forecast)

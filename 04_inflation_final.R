@@ -1,3 +1,9 @@
+## Final Inflation Script ##
+## Final Version of Models are Saved
+## 2 ECI Models: (1) Quarterly ECI, (2) Yearly ECI
+## Quarterly ECI Currently Not used in ESG
+## Plots to Show Simulated Draws Also Are Made
+
 # Libraries
 library(tidyverse)
 library(tidymodels)
@@ -66,8 +72,10 @@ cor(eci_df$log_dif_eci, quarterly_cpi$log_dif_cpi)
 # find correlation between ECI and CPI lagged by 1
 cor(eci_df$log_dif_eci, quarterly_cpi$lagged_cpi, use = "complete.obs")
 
-# Fit Model
 
+# UNUSED FINAL QUARTERLY ECI MODEL -------------------------------------------------------------------------
+
+# Fit Model
 
 log_dif_eci_ts <- ts(eci_df$log_dif_eci, start = c(min(year(eci_df$date)), quarter(min(eci_df$date))), frequency = 4)
 lagged_cpi_ts <- ts(quarterly_cpi$lagged_cpi, start = c(min(year(eci_df$date)), quarter(min(eci_df$date))), frequency = 4)
@@ -75,7 +83,7 @@ lagged_cpi_ts <- ts(quarterly_cpi$lagged_cpi, start = c(min(year(eci_df$date)), 
 arima_model_wlagcpi <- Arima(log_dif_eci_ts, order = c(1, 1, 1), xreg = lagged_cpi_ts)
 summary(arima_model_wlagcpi)
 
-saveRDS(arima_model_wlagcpi, "models/eci_mod.rds")
+#saveRDS(arima_model_wlagcpi, "models/eci_mod.rds")
 
 # Get draws of the model 
 
@@ -132,16 +140,7 @@ plot(quarterly_cpi_sim_df$log_dif_cpi, eci_sim)
 plot(lagged_cpi_sim, eci_sim)
 
 
-
-
-# Yearly ECI --------------------------------------------------------------
-
-yearly_eci_df <- read_csv("data/eci.csv") |> 
-  filter(date >= min(yearly_cpi$date)-years(1)) |> # only need data that cpi has
-  filter(month(date) == 3) |>
-  mutate(lagged_eci = lag(eci, n = 1)) |> 
-  mutate(log_dif_eci = log(eci) - log(lagged_eci)) |> 
-  filter(!is.na(log_dif_eci)) # remove first observation without lag
+# Yearly ECI Model --------------------------------------------------------------
 
 yearly_cpi <- cpi_df |> 
   filter(month(date) == 3) |>
@@ -150,6 +149,13 @@ yearly_cpi <- cpi_df |>
          lagged_cpi = lag(log_dif_cpi, n = 1)) |> 
   filter(!is.na(log_dif_cpi) & !is.na(lagged_cpi)) # remove first observation without lag
 
+
+yearly_eci_df <- read_csv("data/eci.csv") |> 
+  filter(date >= min(yearly_cpi$date)-years(1)) |> # only need data that cpi has
+  filter(month(date) == 3) |>
+  mutate(lagged_eci = lag(eci, n = 1)) |> 
+  mutate(log_dif_eci = log(eci) - log(lagged_eci)) |> 
+  filter(!is.na(log_dif_eci)) # remove first observation without lag
 
 # Correlation between ECI and CPI
 cor(yearly_eci_df$log_dif_eci, yearly_cpi$log_dif_cpi)
@@ -245,14 +251,6 @@ plot(ar101_avg, type = "l", ylim = c(-.009, .015), col = "red")
 lines(ar101_ci[2,], col = "red", lty = 2)
 lines(ar101_ci[1,], col = "red", lty = 2)
 
-# Explore residuals from each model
-
-# Get residuals
-med_residuals <- med_arima_model$residuals
-cpi_residuals <- cpi_arima_model$residuals
-
-cor(med_residuals, cpi_residuals)
-plot(med_residuals, cpi_residuals)
 
 
 

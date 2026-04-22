@@ -1,3 +1,6 @@
+## Script to Get Mortality Rates
+## Raw numbers obtained from 2012 PRI mortality table from SOA
+
 library(tidyverse)
 
 mortality_tbl_raw <- tibble(

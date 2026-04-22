@@ -1,4 +1,8 @@
-## Interest Rate Model ##
+## Final Short Term Interest Rate Script ##
+## A test AR model is saved
+## MOST IMPORTANT: Final Version of GARCH Model is Saved (final model on line 147)
+## Other Iterations of model are made
+## Plots to Show Simulated Draws Also Are Made
 
 ## Libraries
 library(tidyverse)
@@ -136,6 +140,8 @@ simple_garch_spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrd
                                 distribution.model = "norm")
 
 simple_garch_fit <- ugarchfit(spec = simple_garch_spec, data = garch_ts)
+
+## FINAL MODEL ##
 
 # Model with cpi
 garch_spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),

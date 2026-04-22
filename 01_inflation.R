@@ -1,3 +1,7 @@
+## This script just contains EDA modeling iteration ##
+## Primarily use tidymodels workflow to try and identify best ARIMA models for each inflation measure
+## NO SAVED MODELS FROM THIS SCRIPT ##
+
 
 
 # Libraries
@@ -22,8 +26,6 @@ med_inflation_df <- read_csv("data/med_inflation.csv") |>
     filter(!is.na(log_dif_med)) # remove first observation without lag
 
 # get difference of the logs of each value
-
-
 ggplot() +
   #geom_line(aes(x = eci$date, y = eci$log_dif_eci, color = "ECI")) +
   geom_line(aes(x = cpi_df$date, y = cpi_df$log_dif_cpi, color = "CPI")) +
@@ -51,7 +53,7 @@ full_inflation <- cpi_df |>
   full_join(med_inflation_df, by = "date")
 
 
-GGally::ggpairs(full_inflation |> select(log_dif_eci, log_dif_cpi, log_dif_med))
+GGally::ggpairs(full_inflation |> dplyr::select(log_dif_eci, log_dif_cpi, log_dif_med))
 
 ## Explore lags
 lag_df <- full_inflation |> 
@@ -156,7 +158,7 @@ eci_df <- read_csv("data/eci.csv") |>
   mutate(lagged_eci = lag(eci, n = 1)) |> 
   mutate(log_dif_eci = log(eci) - log(lagged_eci)) |> 
   filter(!is.na(log_dif_eci)) |> # remove first observation without lag
-  left_join(quarterly_cpi |> select(date, log_dif_cpi, lagged_cpi), by = "date")
+  left_join(quarterly_cpi |> dplyr::select(date, log_dif_cpi, lagged_cpi), by = "date")
 
 eci_df |> plot_time_series(date, log_dif_eci)
 

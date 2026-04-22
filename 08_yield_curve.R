@@ -1,3 +1,8 @@
+## Yield Curve Modeling ##
+## Build and Save VAR model for slope and curvature modeling
+## Build and Save linear models with fitted weights for each interest rate
+## Build functions to plot in-sample and simulated yield curves
+
 library(tidyverse)
 library(vars)
 library(forecast)

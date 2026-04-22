@@ -14,9 +14,15 @@ cpi_df <- cpi_df_raw |>
 
 # Read in Interest Rates --------------------------------------------------
 
+# link to data: https://fred.stlouisfed.org/series/DGS3MO
+
 ir3mo_raw <- read_csv("raw_data/DGS3MO (1).csv")
 
+# link to data: https://fred.stlouisfed.org/series/DGS10
+
 ir10yr_raw <- read_csv("raw_data/DGS10.csv")
+
+# link to data: https://fred.stlouisfed.org/series/DGS30 etc...
 
 ir30yr_raw <- read_csv("raw_data/DGS30.csv")
 

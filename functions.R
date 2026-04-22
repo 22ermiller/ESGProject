@@ -53,7 +53,7 @@ eci_single_sim <- function(model, sim_length, cpi_sim, final_cpi_value) {
 eci_multiple_sims <- function(
   model,
   sim_length,
-  nsims,
+  n_sims,
   cpi_sims,
   final_cpi_value
 ) {
@@ -90,7 +90,7 @@ med_multiple_sims <- function(model, sim_length, n_sims) {
 
 # Short Term Interest Rates -----------------------------------------------
 
-get_average_3mo_rate <- function(interest_df) {
+get_average_3mo_rate <- function(interest_df, cpi_df) {
   r_bar <- .005
 
   model_df <- interest_df |>
@@ -138,7 +138,7 @@ ir3mo_single_sim <- function(model, sim_length, cpi_sim, mean_rate) {
   return(final_sim)
 }
 
-ir3mo_multiple_sims <- function(model, sim_length, nsims, cpi_sims, mean_rate) {
+ir3mo_multiple_sims <- function(model, sim_length, n_sims, cpi_sims, mean_rate) {
   sims <- matrix(NA, nrow = n_sims, ncol = sim_length)
 
   for (i in 1:n_sims) {
@@ -268,7 +268,7 @@ equity_multiple_sims <- function(
   mean_mod,
   rs_mod,
   sim_length,
-  nsims,
+  n_sims,
   cpi_sims,
   ir3mo_sims
 ) {
@@ -447,3 +447,6 @@ get_death_ages <- function(start_age, tbl, n) {
   
   return(death_ages)
 }
+
+
+

@@ -1,3 +1,6 @@
+## Script to price annuities
+## Most functions build here are saved in their final state in the functions.R file
+
 library(tidyverse)
 
 # Read in functions

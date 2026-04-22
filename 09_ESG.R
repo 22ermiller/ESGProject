@@ -1,3 +1,8 @@
+## Script with many different simulations using ESG draws
+## Lines 16-80 are 'ESG'
+## Rest of script is different iterations of portfolio simulations
+## Lines 321-540 contain function and results used for Case Study in Evan's Paper
+
 # Libraries
 
 library(MSGARCH)
@@ -23,7 +28,7 @@ equity_mean_mod_resids <- readRDS("models/mean_mod_resids.rds")
 source("functions.R")
 
 n_years <- 50
-n_sims <- 10000
+n_sims <- 500
 
 # Load in Necessary Data --------------------------------------------------
 

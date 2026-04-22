@@ -1,3 +1,7 @@
+## More Modeling Iteration Comparisons ##
+## Pivoted to iterating with Arima() function and evaluating behavior of simulated draws
+## NO SAVED MODELS FROM THIS SCRIPT ##
+
 # Libraries
 library(tidyverse)
 library(tidymodels)

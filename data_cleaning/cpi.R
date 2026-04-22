@@ -3,6 +3,8 @@ library(janitor)
 
 # Employment Cost Index --------------------------------------------------
 
+# link to data: https://fred.stlouisfed.org/series/ECIWAG
+
 # read in  data
 eci_raw <- read_csv("raw_data/eci-continuous-dataset.csv") |>
   clean_names()
@@ -23,6 +25,8 @@ write_csv(eci_final, "data/eci.csv")
 
 
 # Medical Inflation ------------------------------------------------------
+
+# link to data: https://fred.stlouisfed.org/series/CPIMEDSL
 
 med_inflation_raw <- read_csv("raw_data/medical_inflation_raw.csv") |> 
   clean_names()

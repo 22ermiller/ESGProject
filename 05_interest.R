@@ -1,3 +1,6 @@
+## EDA and Model Iteration for Short Term Interest Rates ##
+## NO SAVED MODELS FROM THIS SCRIPT ##
+
 library(tidyverse)
 library(gganimate)
 library(patchwork)

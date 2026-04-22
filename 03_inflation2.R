@@ -1,3 +1,7 @@
+## More Modeling Iteration Comparisons ##
+## Models evaluated by behavior of simulated draws and AIC/BIC metrics
+## NO SAVED MODELS FROM THIS SCRIPT ##
+
 # Libraries
 library(tidyverse)
 library(tidymodels)
