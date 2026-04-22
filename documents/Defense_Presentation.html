@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<script src="SRC_Presentation_files/libs/clipboard/clipboard.min.js"></script>
-<script src="SRC_Presentation_files/libs/quarto-html/tabby.min.js"></script>
-<script src="SRC_Presentation_files/libs/quarto-html/popper.min.js"></script>
-<script src="SRC_Presentation_files/libs/quarto-html/tippy.umd.min.js"></script>
-<link href="SRC_Presentation_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="SRC_Presentation_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="SRC_Presentation_files/libs/quarto-html/quarto-syntax-highlighting-dark-8162e5fc71f232ea33f1e8ee7aaa6861.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+<script src="Defense_Presentation_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Defense_Presentation_files/libs/quarto-html/tabby.min.js"></script>
+<script src="Defense_Presentation_files/libs/quarto-html/popper.min.js"></script>
+<script src="Defense_Presentation_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="Defense_Presentation_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Defense_Presentation_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="Defense_Presentation_files/libs/quarto-html/quarto-syntax-highlighting-dark-8162e5fc71f232ea33f1e8ee7aaa6861.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.9.8">
 
   <meta name="author" content="Evan Miller, Brian Hartman, Jean-Francois Begin (Simon Fraser University)">
@@ -14,8 +14,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
-  <link rel="stylesheet" href="SRC_Presentation_files/libs/revealjs/dist/reset.css">
-  <link rel="stylesheet" href="SRC_Presentation_files/libs/revealjs/dist/reveal.css">
+  <link rel="stylesheet" href="Defense_Presentation_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="Defense_Presentation_files/libs/revealjs/dist/reveal.css">
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -29,11 +29,11 @@
       vertical-align: middle;
     }
   </style>
-  <link rel="stylesheet" href="SRC_Presentation_files/libs/revealjs/dist/theme/quarto-06e768f098560084c2d7120de8ad04fb.css">
-  <link href="SRC_Presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
-  <link href="SRC_Presentation_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
-  <link href="SRC_Presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
-  <link href="SRC_Presentation_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <link rel="stylesheet" href="Defense_Presentation_files/libs/revealjs/dist/theme/quarto-06e768f098560084c2d7120de8ad04fb.css">
+  <link href="Defense_Presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="Defense_Presentation_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="Defense_Presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="Defense_Presentation_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
   <style type="text/css">
     .reveal div.sourceCode {
       margin: 0;
@@ -275,7 +275,7 @@ Evan Miller, Brian Hartman, Jean-Francois Begin (Simon Fraser University)
           display:block!important;
       }</style></aside>
 
-<img data-src="documents/www/ESG_diagram.png" class="quarto-figure quarto-figure-center r-stretch"></section>
+<img data-src="www/ESG_diagram.png" class="quarto-figure quarto-figure-center r-stretch"></section>
 <section id="fitted-esg" class="slide level2 smaller" data-background-color="#FFFAEE">
 <h2>Fitted ESG</h2>
 <p>Model Selection Criteria:</p>
@@ -290,22 +290,22 @@ Evan Miller, Brian Hartman, Jean-Francois Begin (Simon Fraser University)
 <li>Equity Returns: S&amp;P 500 from <code>tidyquant</code> package</li>
 <li>Mortality: SOA Mortality Table</li>
 </ul>
-<p><img data-src="documents/www/ESG_structure_models_transparent.png" class="absolute" style="bottom: 70px; right: -200px; width: 700px; "></p>
+<p><img data-src="www/ESG_structure_models_transparent.png" class="absolute" style="bottom: 70px; right: -200px; width: 700px; "></p>
 </section>
 <section id="wage-inflation-model-selection" class="slide level2 smaller" data-background-color="#FFFAEE">
 <h2>Wage Inflation Model Selection</h2>
-<p><img data-src="documents/www/eci_diagram.png" class="absolute" style="top: 0px; right: -100px; width: 400px; "></p>
+<p><img data-src="www/eci_diagram.png" class="absolute" style="top: 0px; right: -100px; width: 400px; "></p>
 <ol type="1">
 <li>Explore Relationship between CPI and ECI</li>
 </ol>
-<p><img data-src="documents/www/eci_cpi_plot.png"></p>
+<p><img data-src="www/eci_cpi_plot.png"></p>
 <ul>
 <li>Lagging: <span class="math inline">\(Cor(\texttt{ECI}_t, \texttt{CPI}_{t-1}) = .557\)</span></li>
 </ul>
 </section>
 <section id="wage-inflation-model-selection-1" class="slide level2 smaller" data-background-color="#FFFAEE">
 <h2>Wage Inflation Model Selection</h2>
-<p><img data-src="documents/www/eci_diagram.png" class="absolute" style="top: 0px; right: -100px; width: 400px; "></p>
+<p><img data-src="www/eci_diagram.png" class="absolute" style="top: 0px; right: -100px; width: 400px; "></p>
 <ol start="2" type="1">
 <li><p>Test Different Models</p>
 <ul>
@@ -314,19 +314,19 @@ Evan Miller, Brian Hartman, Jean-Francois Begin (Simon Fraser University)
 <li>Include Differencing?</li>
 </ul></li>
 </ol>
-<p><img data-src="documents/www/eci_model_compare.png"></p>
+<p><img data-src="www/eci_model_compare.png"></p>
 </section>
 <section id="wage-inflation-model-selection-2" class="slide level2 smaller" data-background-color="#FFFAEE">
 <h2>Wage Inflation Model Selection</h2>
-<p><img data-src="documents/www/eci_diagram.png" class="absolute" style="top: 0px; right: -100px; width: 400px; "></p>
+<p><img data-src="www/eci_diagram.png" class="absolute" style="top: 0px; right: -100px; width: 400px; "></p>
 <ol start="3" type="1">
 <li>Simplifying the Model</li>
 </ol>
-<p><img data-src="documents/www/eci_timeseries.png"></p>
+<p><img data-src="www/eci_timeseries.png"></p>
 </section>
 <section id="wage-inflation-model-selection-3" class="slide level2 smaller" data-background-color="#FFFAEE">
 <h2>Wage Inflation Model Selection</h2>
-<p><img data-src="documents/www/eci_diagram.png" class="absolute" style="top: 0px; right: -100px; width: 400px; "></p>
+<p><img data-src="www/eci_diagram.png" class="absolute" style="top: 0px; right: -100px; width: 400px; "></p>
 <ol start="3" type="1">
 <li>Simplifying the Model
 <ul>
@@ -335,7 +335,7 @@ Evan Miller, Brian Hartman, Jean-Francois Begin (Simon Fraser University)
 <li>AR(1)</li>
 </ul></li>
 </ol>
-<p><img data-src="documents/www/eci_final_draws.png"></p>
+<p><img data-src="www/eci_final_draws.png"></p>
 </section>
 <section id="inflation-models" class="slide level2 smaller" data-background-color="#FFFAEE">
 <h2>Inflation Models</h2>
@@ -389,7 +389,7 @@ r_{i,t} &amp; \text{if }r_{i,t} &gt; \overline{r} \\
 </section>
 <section id="yield-curves-1" class="slide level2 smaller" data-background-color="#FFFAEE">
 <h2>Yield Curves</h2>
-<video src="documents/www/yield_curve.mp4" loop="" muted="" autoplay="" playsinline="" style="
+<video src="www/yield_curve.mp4" loop="" muted="" autoplay="" playsinline="" style="
         position: absolute;
         top: 0px;
         right: 100px;
@@ -400,7 +400,7 @@ r_{i,t} &amp; \text{if }r_{i,t} &gt; \overline{r} \\
         background: white;">
 </video>
 <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 90%;">
-<p><img src="documents/www/sample_yield_curve.png" style="width: 100%; height: auto;"></p>
+<p><img src="www/sample_yield_curve.png" style="width: 100%; height: auto;"></p>
 </div>
 </section>
 <section id="equity-returns" class="slide level2 smaller" data-background-color="#FFFAEE">
@@ -502,11 +502,11 @@ v_t =
 <section id="results-10000-simulations" class="slide level2" data-background-color="#FFFAEE">
 <h2>Results (10,000 Simulations)</h2>
 
-<img data-src="documents/www/sim_results.png" class="quarto-figure quarto-figure-center r-stretch"></section>
+<img data-src="www/sim_results.png" class="quarto-figure quarto-figure-center r-stretch"></section>
 <section id="results-10000-simulations-1" class="slide level2" data-background-color="#FFFAEE">
 <h2>Results (10,000 Simulations)</h2>
 
-<img data-src="documents/www/sim_results_zoomed.png" class="quarto-figure quarto-figure-center r-stretch"><div class="fragment">
+<img data-src="www/sim_results_zoomed.png" class="quarto-figure quarto-figure-center r-stretch"><div class="fragment">
 <ul>
 <li><strong>4% Rule?</strong></li>
 </ul>
@@ -529,7 +529,7 @@ v_t =
 <li>Shiny App</li>
 </ul>
 </div>
-<video class="fragment fade-up" data-fragment-index="3" src="documents/www/app_example.webm" loop="" muted="" playsinline="" onloadedmetadata="this.playbackRate = 1.75;" ontransitionend="this.play();" style="
+<video class="fragment fade-up" data-fragment-index="3" src="www/app_example.webm" loop="" muted="" playsinline="" onloadedmetadata="this.playbackRate = 1.75;" ontransitionend="this.play();" style="
     position: absolute;
     bottom: 40px;
     right: 40px;
@@ -552,19 +552,19 @@ v_t =
 </div></div>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script>
-  <script src="SRC_Presentation_files/libs/revealjs/dist/reveal.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/dist/reveal.js"></script>
   <!-- reveal.js plugins -->
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/quarto-support/support.js"></script>
   
 
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/notes/notes.js"></script>
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/search/search.js"></script>
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/zoom/zoom.js"></script>
-  <script src="SRC_Presentation_files/libs/revealjs/plugin/math/math.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="Defense_Presentation_files/libs/revealjs/plugin/math/math.js"></script>
   <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
 
   <script>

@@ -190,7 +190,7 @@ Financial Unknowns:
 Model of an economic environment used to simulate financial markets and economic variables Used in pricing financial products such as insurance and financial derivatives
 :::
 
-![](documents/www/ESG_diagram.png){fig-align="center"}
+![](www/ESG_diagram.png){fig-align="center"}
 
 ## Fitted ESG {.smaller background-color="#FFFAEE"}
 
@@ -206,21 +206,21 @@ Data:
 -   Equity Returns: S&P 500 from `tidyquant` package
 -   Mortality: SOA Mortality Table
 
-![](documents/www/ESG_structure_models_transparent.png){.absolute bottom="70" right="-200" width="700"}
+![](www/ESG_structure_models_transparent.png){.absolute bottom="70" right="-200" width="700"}
 
 ## Wage Inflation Model Selection {.smaller background-color="#FFFAEE"}
 
-![](documents/www/eci_diagram.png){.absolute top="0" right="-100" width="400"}
+![](www/eci_diagram.png){.absolute top="0" right="-100" width="400"}
 
 1.  Explore Relationship between CPI and ECI
 
-![](documents/www/eci_cpi_plot.png)
+![](www/eci_cpi_plot.png)
 
 -   Lagging: $Cor(\texttt{ECI}_t, \texttt{CPI}_{t-1}) = .557$
 
 ## Wage Inflation Model Selection {.smaller background-color="#FFFAEE"}
 
-![](documents/www/eci_diagram.png){.absolute top="0" right="-100" width="400"}
+![](www/eci_diagram.png){.absolute top="0" right="-100" width="400"}
 
 2.  Test Different Models
 
@@ -228,26 +228,26 @@ Data:
     -   Differing data subsets (1990 vs. 2010)
     -   Include Differencing?
 
-![](documents/www/eci_model_compare.png)
+![](www/eci_model_compare.png)
 
 ## Wage Inflation Model Selection {.smaller background-color="#FFFAEE"}
 
-![](documents/www/eci_diagram.png){.absolute top="0" right="-100" width="400"}
+![](www/eci_diagram.png){.absolute top="0" right="-100" width="400"}
 
 3.  Simplifying the Model
 
-![](documents/www/eci_timeseries.png)
+![](www/eci_timeseries.png)
 
 ## Wage Inflation Model Selection {.smaller background-color="#FFFAEE"}
 
-![](documents/www/eci_diagram.png){.absolute top="0" right="-100" width="400"}
+![](www/eci_diagram.png){.absolute top="0" right="-100" width="400"}
 
 3.  Simplifying the Model
     -   Yearly instead of Quarterly
     -   CPI instead of lagged CPI as predictor
     -   AR(1)
 
-![](documents/www/eci_final_draws.png)
+![](www/eci_final_draws.png)
 
 ## Inflation Models {.smaller background-color="#FFFAEE"}
 
@@ -306,7 +306,7 @@ $$ \boldsymbol{x'} = [\texttt{level}, \texttt{slope},\texttt{curvature}]$$
 
 ```{=html}
 <video 
-    src="documents/www/yield_curve.mp4" 
+    src="www/yield_curve.mp4" 
     loop 
     muted 
     autoplay 
@@ -324,7 +324,7 @@ $$ \boldsymbol{x'} = [\texttt{level}, \texttt{slope},\texttt{curvature}]$$
 ```
 
 ::: {style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 90%;"}
-<img src="documents/www/sample_yield_curve.png" style="width: 100%; height: auto;"/>
+<img src="www/sample_yield_curve.png" style="width: 100%; height: auto;"/>
 :::
 
 ## Equity Returns {.smaller background-color="#FFFAEE"}
@@ -429,11 +429,11 @@ $$
 
 ## Results (10,000 Simulations) {background-color="#FFFAEE"}
 
-![](documents/www/sim_results.png){fig-align="center"}
+![](www/sim_results.png){fig-align="center"}
 
 ## Results (10,000 Simulations) {background-color="#FFFAEE"}
 
-![](documents/www/sim_results_zoomed.png){fig-align="center"}
+![](www/sim_results_zoomed.png){fig-align="center"}
 
 ::: fragment
 -   **4% Rule?**
@@ -454,7 +454,7 @@ $$
 :::
 
 ```{=html}
-<video class="fragment fade-up" data-fragment-index="3" src="documents/www/app_example.webm" loop muted playsinline onloadedmetadata="this.playbackRate = 1.75;" ontransitionend="this.play();" style="
+<video class="fragment fade-up" data-fragment-index="3" src="www/app_example.webm" loop muted playsinline onloadedmetadata="this.playbackRate = 1.75;" ontransitionend="this.play();" style="
     position: absolute;
     bottom: 40px;
     right: 40px;

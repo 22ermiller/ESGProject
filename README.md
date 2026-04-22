@@ -14,6 +14,7 @@ This repository contains all the code and documents relating to my BYU master's 
 
  - ESG_draws.R: function to get simulated draws from all pieces of ESG
  - portfolio_sim_functions.R: functions to simulate a portfolio
+ - sample_simulation.R: script to show usage of ESG draws with a portfolio simulation function
 
 ### Model Development Scripts (01-08)
 

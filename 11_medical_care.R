@@ -1,3 +1,9 @@
+## Portfolio Simulation with Variable Medical Expenses ##
+## Script contains derivation of gamma distributions for different health risk levels
+## Implement Long Term Care costs
+## Run Simulation to show that accounting for medical costs in this way decreases overall portfolio success rate
+
+
 library(tidyverse)
 
 # medical cost data from https://personal1.vanguard.com/pdf/ISGPLHC_072021.pdf
