@@ -37,7 +37,10 @@ This file contains all the helper functions for the ESG
 
 ### /documents
 
-Contains important documents/presentation files related to the presentation of the project. - ESGPaper.pdf is the final paper describing the project - DefensePresentation.pdf is the presentation file used for project defense
+Contains important documents/presentation files related to the presentation of the project. 
+
+- ESGPaper.pdf is the final paper describing the project 
+- DefensePresentation.pdf is the presentation file used for project defense
 
 ## Updating the ESG
 
