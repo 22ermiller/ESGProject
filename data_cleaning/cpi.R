@@ -46,6 +46,19 @@ med_inflation_final <- med_inflation_raw |>
   ) |>
   select(date, med_inflation = value)
 
+## Missing data for October 2025 (method obtained from Federal Reserve Bank of Cleveland)
+missing_row_num <- which(med_inflation_final$date == "2025-10-01")
+prev_record <- med_inflation_final[missing_row_num - 1, ]
+next_record <- med_inflation_final[missing_row_num + 1, ]
+
+inferred_value <- prev_record$med_inflation *
+  ((1 +
+    ((next_record$med_inflation - prev_record$med_inflation) /
+      prev_record$med_inflation))^(1 /
+    2))
+
+med_inflation_final[missing_row_num, "med_inflation"] <- inferred_value
+
 write_csv(med_inflation_final, "data/med_inflation.csv")
 
 
@@ -57,5 +70,16 @@ cpi_raw <- read_csv("raw_data/cpi_less_medical_raw.csv") |>
   clean_names()
 
 cpi_final <- cpi_raw |> rename(date = observation_date, cpi = cusr0000sa0l5)
+
+## Missing data for October 2025 (method obtained from Federal Reserve Bank of Cleveland)
+missing_row_num <- which(cpi_final$date == "2025-10-01")
+prev_record <- cpi_final[missing_row_num - 1, ]
+next_record <- cpi_final[missing_row_num + 1, ]
+
+inferred_value <- prev_record$cpi *
+  ((1 + ((next_record$cpi - prev_record$cpi) / prev_record$cpi))^(1 / 2))
+
+cpi_final[missing_row_num, "cpi"] <- inferred_value
+
 
 write_csv(cpi_final, "data/cpi.csv")
